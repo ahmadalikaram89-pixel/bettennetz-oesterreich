@@ -6,6 +6,7 @@
 <title>BettenNetz Österreich · OP-Kapazitätsvermittlung</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 :root {
   /* Dark theme (default) */
@@ -741,12 +742,39 @@ const RLABEL = {admin:'Administrator', staff:'Pflegepersonal', goeg:'GÖG · Vol
 
 const FAECHERLIST = ['Allgemeinchirurgie','Herzchirurgie / Kardiologie','Neurochirurgie','Orthopädie / Unfallchirurgie','Gynäkologie','Urologie','Onkologie','Pädiatrische Chirurgie','Gefäßchirurgie'];
 
-// Shared transfer store - connects map requests to dashboard
-let TRANSFERS = [
-  {id:1,tid:'TRF-2847',from:'LKH Univ. Graz',      fach:'Herzchirurgie / Kardiologie',  prio:'Notfall', time:'08:14',status:'pending'},
-  {id:2,tid:'TRF-2846',from:'Klinikum Wels',        fach:'Allgemeinchirurgie',            prio:'Dringend',time:'07:52',status:'pending'},
-  {id:3,tid:'TRF-2831',from:'LKH Salzburg',         fach:'Orthopädie / Unfallchirurgie',  prio:'Normal',  time:'06:30',status:'accepted'},
-];
+// Supabase — shared transfer store, synced in real time across all hospitals.
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let TRANSFERS = [];
+let transfersChannel = null;
+
+function rowToTransfer(r){
+  return {id:r.id, tid:r.tid, from:r.from_hospital, fach:r.fach, prio:r.prio,
+          time:new Date(r.created_at).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}), status:r.status};
+}
+
+async function loadTransfers(){
+  const {data,error} = await sb.from('transfers').select('*').order('created_at',{ascending:false});
+  if(error){console.error('loadTransfers',error);return;}
+  TRANSFERS = data.map(rowToTransfer);
+  renderTR(); updateBadge(); recalc();
+}
+
+function subscribeTransfers(){
+  if(transfersChannel) return;
+  transfersChannel = sb.channel('transfers-sync')
+    .on('postgres_changes',{event:'*',schema:'public',table:'transfers'},payload=>{
+      if(payload.eventType==='INSERT'){
+        if(!TRANSFERS.some(t=>t.id===payload.new.id)) TRANSFERS.unshift(rowToTransfer(payload.new));
+      } else if(payload.eventType==='UPDATE'){
+        TRANSFERS = TRANSFERS.map(t=>t.id===payload.new.id?rowToTransfer(payload.new):t);
+      }
+      renderTR(); updateBadge(); recalc();
+    })
+    .subscribe();
+}
 
 const HIST_DATA = [
   {c:'var(--green)', txt:'OP-Kapazität aktualisiert — 3 Allgemein-OP frei',       t:'Heute 07:45'},
@@ -844,6 +872,7 @@ function login(){
 }
 function logout(){
   CU=null;
+  if(transfersChannel){sb.removeChannel(transfersChannel);transfersChannel=null;}
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('app').classList.remove('on');
   document.getElementById('lu').value='';
@@ -870,8 +899,9 @@ function initApp(){
     nc.style.opacity='.4'; nc.style.pointerEvents='none';
   }
 
-  renderPins(); renderList(); renderFach(); renderTR(); renderHist();
+  renderPins(); renderList(); renderFach(); renderHist();
   recalc(); updateMapStats(); tick();
+  loadTransfers(); subscribeTransfers();
 }
 
 /* ============================================================
@@ -1135,7 +1165,7 @@ function renderTR(){
     const sc=t.status==='pending'?'chip-a':t.status==='accepted'?'chip-g':'chip-r';
     const sl=t.status==='pending'?'Ausstehend':t.status==='accepted'?'Angenommen':'Abgelehnt';
     const acts=t.status==='pending'
-      ?`<div class="acts"><button class="btn-acc" onclick="act(${t.id},'accepted')">Annehmen</button><button class="btn-dec" onclick="act(${t.id},'declined')">Ablehnen</button></div>`
+      ?`<div class="acts"><button class="btn-acc" onclick="act('${t.id}','accepted')">Annehmen</button><button class="btn-dec" onclick="act('${t.id}','declined')">Ablehnen</button></div>`
       :`<span style="color:var(--t3);font-size:12px">—</span>`;
     return `<tr>
       <td><div class="pname" style="font-family:'JetBrains Mono',monospace;font-size:13px">${t.tid}</div><div class="psv">Keine Patientendaten</div></td>
@@ -1149,7 +1179,10 @@ function renderTR(){
   }).join('');
 }
 
-function act(id,s){
+async function act(id,s){
+  const {error}=await sb.from('transfers').update({status:s}).eq('id',id);
+  if(error){console.error('act',error);return;}
+  // optimistic local update; the realtime UPDATE event will confirm/no-op
   TRANSFERS=TRANSFERS.map(t=>t.id===id?{...t,status:s}:t);
   renderTR(); updateBadge(); recalc();
 }
@@ -1203,23 +1236,22 @@ function openModal(){
 }
 function closeModal(){document.getElementById('modal').classList.remove('on');}
 
-function submitReq(){
-  // Generate new transfer
+async function submitReq(){
   const tid='TRF-'+Math.floor(2000+Math.random()*900);
   const fach=document.getElementById('mFach').value;
   const prioRaw=document.getElementById('mPrio').value;
   const prio=prioRaw.split(' ')[0]; // "Normal", "Dringend", "Notfall"
 
-  // Add to shared TRANSFERS store — appears in dashboard
-  TRANSFERS.unshift({
-    id: Date.now(),
+  // Insert into the shared Supabase table — realtime pushes it to every
+  // connected hospital, including the requesting one.
+  const {error}=await sb.from('transfers').insert({
     tid,
-    from: CU ? CU.hospital : 'Unbekannt',
+    from_hospital: CU ? CU.hospital : 'Unbekannt',
     fach,
     prio,
-    time: T(),
     status: 'pending'
   });
+  if(error){console.error('submitReq',error);return;}
 
   // Show success
   document.getElementById('mbody').style.display='none';
@@ -1227,9 +1259,6 @@ function submitReq(){
   document.getElementById('mhead').style.display='none';
   set('mtrf-id', tid);
   document.getElementById('msuccess').classList.add('on');
-
-  // Update badge and table
-  renderTR(); updateBadge(); recalc();
 }
 
 
