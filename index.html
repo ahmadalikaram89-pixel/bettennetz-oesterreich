@@ -743,11 +743,20 @@ const RLABEL = {admin:'Administrator', staff:'Pflegepersonal', goeg:'GÖG · Vol
 const FAECHERLIST = ['Allgemeinchirurgie','Herzchirurgie / Kardiologie','Neurochirurgie','Orthopädie / Unfallchirurgie','Gynäkologie','Urologie','Onkologie','Pädiatrische Chirurgie','Gefäßchirurgie'];
 
 // Supabase — shared transfer store, synced in real time across all hospitals.
+// Not wired up yet: fill these in once the Supabase project exists, and
+// SUPABASE_CONFIGURED will flip the app over from the local fallback below
+// to real cross-session sync automatically.
 const SUPABASE_URL = 'YOUR_SUPABASE_URL';
 const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_CONFIGURED = SUPABASE_URL.startsWith('http');
+const sb = SUPABASE_CONFIGURED ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-let TRANSFERS = [];
+// Local fallback so the prototype still works standalone until Supabase is wired up.
+let TRANSFERS = [
+  {id:1,tid:'TRF-2847',from:'LKH Univ. Graz',      fach:'Herzchirurgie / Kardiologie',  prio:'Notfall', time:'08:14',status:'pending'},
+  {id:2,tid:'TRF-2846',from:'Klinikum Wels',        fach:'Allgemeinchirurgie',            prio:'Dringend',time:'07:52',status:'pending'},
+  {id:3,tid:'TRF-2831',from:'LKH Salzburg',         fach:'Orthopädie / Unfallchirurgie',  prio:'Normal',  time:'06:30',status:'accepted'},
+];
 let transfersChannel = null;
 
 function rowToTransfer(r){
@@ -756,6 +765,7 @@ function rowToTransfer(r){
 }
 
 async function loadTransfers(){
+  if(!SUPABASE_CONFIGURED) return; // keep the local fallback seed above
   const {data,error} = await sb.from('transfers').select('*').order('created_at',{ascending:false});
   if(error){console.error('loadTransfers',error);return;}
   TRANSFERS = data.map(rowToTransfer);
@@ -763,7 +773,7 @@ async function loadTransfers(){
 }
 
 function subscribeTransfers(){
-  if(transfersChannel) return;
+  if(!SUPABASE_CONFIGURED || transfersChannel) return;
   transfersChannel = sb.channel('transfers-sync')
     .on('postgres_changes',{event:'*',schema:'public',table:'transfers'},payload=>{
       if(payload.eventType==='INSERT'){
@@ -1180,9 +1190,11 @@ function renderTR(){
 }
 
 async function act(id,s){
-  const {error}=await sb.from('transfers').update({status:s}).eq('id',id);
-  if(error){console.error('act',error);return;}
-  // optimistic local update; the realtime UPDATE event will confirm/no-op
+  if(SUPABASE_CONFIGURED){
+    const {error}=await sb.from('transfers').update({status:s}).eq('id',id);
+    if(error){console.error('act',error);return;}
+  }
+  // optimistic local update; if configured, the realtime UPDATE event confirms/no-ops
   TRANSFERS=TRANSFERS.map(t=>t.id===id?{...t,status:s}:t);
   renderTR(); updateBadge(); recalc();
 }
@@ -1242,16 +1254,21 @@ async function submitReq(){
   const prioRaw=document.getElementById('mPrio').value;
   const prio=prioRaw.split(' ')[0]; // "Normal", "Dringend", "Notfall"
 
-  // Insert into the shared Supabase table — realtime pushes it to every
-  // connected hospital, including the requesting one.
-  const {error}=await sb.from('transfers').insert({
-    tid,
-    from_hospital: CU ? CU.hospital : 'Unbekannt',
-    fach,
-    prio,
-    status: 'pending'
-  });
-  if(error){console.error('submitReq',error);return;}
+  if(SUPABASE_CONFIGURED){
+    // Insert into the shared Supabase table — realtime pushes it to every
+    // connected hospital, including the requesting one.
+    const {error}=await sb.from('transfers').insert({
+      tid,
+      from_hospital: CU ? CU.hospital : 'Unbekannt',
+      fach,
+      prio,
+      status: 'pending'
+    });
+    if(error){console.error('submitReq',error);return;}
+  } else {
+    TRANSFERS.unshift({id:Date.now(),tid,from:CU?CU.hospital:'Unbekannt',fach,prio,time:T(),status:'pending'});
+    renderTR(); updateBadge(); recalc();
+  }
 
   // Show success
   document.getElementById('mbody').style.display='none';
