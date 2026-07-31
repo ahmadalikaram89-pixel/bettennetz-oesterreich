@@ -229,6 +229,7 @@ input,select{font-family:inherit;}
 .grid2{display:grid;grid-template-columns:1fr 300px;gap:13px;}
 
 /* CAP TABLE */
+.tscroll{overflow-x:auto;}
 .ctable{width:100%;border-collapse:collapse;}
 .ctable thead th{padding:8px 17px;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;text-align:left;border-bottom:1px solid var(--border);}
 .ctable thead th:not(:first-child){text-align:center;}
@@ -361,6 +362,37 @@ input,select{font-family:inherit;}
 .mtrf-id{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);font-weight:600;margin-top:11px;padding:7px 15px;background:var(--accent-d);border-radius:6px;display:inline-block;}
 
 .mt13{margin-top:13px;}
+
+/* ===== MOBILE (Karte + Dashboard) ===== */
+@media (max-width: 860px) {
+  .lw{width:100%;max-width:380px;padding:0 16px;}
+
+  .topbar{flex-wrap:wrap;height:auto;min-height:var(--topbar);padding:8px 12px;row-gap:6px;}
+  .tbrand{width:auto;}
+  .tdiv{display:none;}
+  .tbl,.tlive,.tclock{display:none;}
+  .mode-switcher{order:3;width:100%;}
+  .mode-btn{flex:1;}
+
+  /* Karte */
+  #view-map{flex-direction:column;}
+  .map-sidebar{width:100%;max-height:38vh;border-right:none;border-bottom:1px solid var(--border);}
+  .map-area{flex:1;min-height:32vh;}
+  .stats-bar{flex-wrap:wrap;max-width:calc(100% - 32px);}
+  .stat-pill{min-width:56px;padding:6px 10px;}
+  .detail-panel{position:fixed;left:0;right:0;top:auto;bottom:0;width:100%;max-height:75vh;border-left:none;border-top:1px solid var(--border);border-radius:14px 14px 0 0;z-index:60;transform:translateY(100%);transition:transform .25s ease;box-shadow:0 -8px 24px rgba(0,0,0,0.15);}
+  .detail-panel.on{width:100%;border-left-width:0;transform:translateY(0);}
+
+  /* Dashboard */
+  #view-dash{flex-direction:column;}
+  .dash-sidebar{width:100%;flex-direction:row;align-items:center;overflow-x:auto;padding:8px 10px;gap:2px;}
+  .dash-sidebar .nslabel,.dash-sidebar .ndiv,.dash-sidebar .sfooter{display:none;}
+  .dash-sidebar .nitem{width:auto;flex-shrink:0;white-space:nowrap;margin:0 1px;}
+  .pheader{padding:16px 16px 0;}
+  .pbody{padding:12px 16px 20px;}
+  .srow{grid-template-columns:1fr;}
+  .grid2{grid-template-columns:1fr;}
+}
 </style>
 </head>
 <body>
@@ -552,7 +584,7 @@ input,select{font-family:inherit;}
             <div>
               <div class="sc">
                 <div class="sch"><div class="sctitle">OP-Säle heute</div><div class="scmeta">Intern · exakte Zahlen nicht öffentlich</div></div>
-                <table class="ctable">
+                <div class="tscroll"><table class="ctable">
                   <thead><tr><th>Kategorie</th><th>Gesamt</th><th>Frei heute</th><th>Auslastung</th></tr></thead>
                   <tbody>
                     <tr><td><div class="ctype">Allgemein-OP</div><div class="csub">Alle Fachrichtungen</div></td><td class="cnc"><input class="cni" id="opGT" type="number" min="0" value="8" oninput="recalc()"></td><td class="cnc"><input class="cni" id="opGF" type="number" min="0" value="3" oninput="recalc()"></td><td class="cbar"><div class="cbarw"><div class="cbtrack"><div class="cbfill" id="bfG"></div></div><div class="cbpct" id="pcG"></div></div></td></tr>
@@ -560,7 +592,7 @@ input,select{font-family:inherit;}
                     <tr><td><div class="ctype">Neurochirurgie</div><div class="csub">Spezialisierter Eingriff</div></td><td class="cnc"><input class="cni" id="opNT" type="number" min="0" value="2" oninput="recalc()"></td><td class="cnc"><input class="cni" id="opNF" type="number" min="0" value="0" oninput="recalc()"></td><td class="cbar"><div class="cbarw"><div class="cbtrack"><div class="cbfill" id="bfN"></div></div><div class="cbpct" id="pcN"></div></div></td></tr>
                     <tr><td><div class="ctype">Orthopädie / Unfallchirurgie</div><div class="csub">Spezialisierter Eingriff</div></td><td class="cnc"><input class="cni" id="opOT" type="number" min="0" value="4" oninput="recalc()"></td><td class="cnc"><input class="cni" id="opOF" type="number" min="0" value="2" oninput="recalc()"></td><td class="cbar"><div class="cbarw"><div class="cbtrack"><div class="cbfill" id="bfO"></div></div><div class="cbpct" id="pcO"></div></div></td></tr>
                   </tbody>
-                </table>
+                </table></div>
                 <div class="savebar"><div class="sbleft"><div class="sbtime">Zuletzt: <span id="lstime">—</span></div><div class="toast" id="toast">✓ Gespeichert</div></div><button class="btn-save" onclick="save()">Speichern & veröffentlichen</button></div>
               </div>
             </div>
@@ -590,10 +622,10 @@ input,select{font-family:inherit;}
         <div class="pheader"><div><div class="ptitle">Eingehende OP-Anfragen</div><div class="psub">Anonyme Anfragen · Keine Patientendaten gespeichert</div></div></div>
         <div class="pbody">
           <div class="sc">
-            <table class="dtable">
+            <div class="tscroll"><table class="dtable">
               <thead><tr><th>Anfrage-ID</th><th>Von Krankenhaus</th><th>OP-Fachbereich</th><th>Priorität</th><th>Eingang</th><th>Status</th><th>Aktion</th></tr></thead>
               <tbody id="tbody"></tbody>
-            </table>
+            </table></div>
           </div>
         </div>
       </div>
@@ -621,10 +653,10 @@ input,select{font-family:inherit;}
         <div class="pheader"><div><div class="ptitle">GÖG · OP-Auslastung Österreich</div><div class="psub">Nur GÖG-intern · Keine absoluten Zahlen gespeichert</div></div></div>
         <div class="pbody">
           <div class="sc">
-            <table class="dtable">
+            <div class="tscroll"><table class="dtable">
               <thead><tr><th>Krankenhaus</th><th>Bundesland</th><th>Allgemein</th><th>Herzchirurgie</th><th>Neurochirurgie</th><th>Orthopädie</th><th>Status</th><th>Stand</th></tr></thead>
               <tbody id="gbody"></tbody>
-            </table>
+            </table></div>
           </div>
         </div>
       </div>
@@ -724,10 +756,11 @@ function rowToTransfer(r){
 }
 
 async function loadTransfers(){
-  if(!SUPABASE_CONFIGURED) return; // keep the local fallback seed above
-  const {data,error} = await sb.from('transfers').select('*').order('created_at',{ascending:false});
-  if(error){console.error('loadTransfers',error);return;}
-  TRANSFERS = data.map(rowToTransfer);
+  if(SUPABASE_CONFIGURED){
+    const {data,error} = await sb.from('transfers').select('*').order('created_at',{ascending:false});
+    if(error){console.error('loadTransfers',error);return;}
+    TRANSFERS = data.map(rowToTransfer);
+  }
   renderTR(); updateBadge(); recalc();
 }
 
