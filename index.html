@@ -150,6 +150,7 @@ input,select{font-family:inherit;}
 
 /* DETAIL PANEL */
 .detail-panel{width:0;min-width:0;flex-shrink:0;background:var(--card);border-left:0px solid var(--border);overflow:hidden;display:flex;flex-direction:column;transition:width .25s ease,border-width .2s;box-shadow:-2px 0 8px rgba(0,0,0,0.08);}
+.dp-backdrop{display:none;}
 .detail-panel.on{width:272px;border-left-width:1px;}
 @keyframes slideIn{from{opacity:0;transform:translateX(8px);}to{opacity:1;transform:translateX(0);}}
 .dp-head{padding:13px 16px;border-bottom:1px solid var(--border);position:relative;flex-shrink:0;}
@@ -382,6 +383,7 @@ input,select{font-family:inherit;}
   .stat-pill{min-width:56px;padding:6px 10px;}
   .detail-panel{position:fixed;left:0;right:0;top:auto;bottom:0;width:100%;max-height:75vh;border-left:none;border-top:1px solid var(--border);border-radius:14px 14px 0 0;z-index:60;transform:translateY(100%);transition:transform .25s ease;box-shadow:0 -8px 24px rgba(0,0,0,0.15);}
   .detail-panel.on{width:100%;border-left-width:0;transform:translateY(0);}
+  .dp-backdrop.on{display:block;position:fixed;inset:0;background:rgba(15,31,53,0.35);z-index:59;}
 
   /* Dashboard */
   #view-dash{flex-direction:column;}
@@ -504,6 +506,7 @@ input,select{font-family:inherit;}
 
       </div>
       <!-- DETAIL PANEL -->
+      <div class="dp-backdrop" id="dpBackdrop" onclick="closeDetail()"></div>
       <div class="detail-panel" id="detailPanel">
         <div class="dp-head">
           <button class="dp-close" onclick="closeDetail()">×</button>
@@ -666,7 +669,7 @@ input,select{font-family:inherit;}
 </div>
 
 <!-- ===== MODAL ===== -->
-<div class="modal-overlay" id="modal">
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
   <div class="modal">
     <div class="mhead" id="mhead">
       <div class="mtitle">OP-Kapazität anfragen</div>
@@ -707,7 +710,7 @@ input,select{font-family:inherit;}
     </div>
     <div class="mfooter" id="mfooter">
       <button class="btn-secondary" onclick="closeModal()">Abbrechen</button>
-      <button class="btn-save" onclick="submitReq()">Anfrage senden</button>
+      <button class="btn-save" id="mSubmitBtn" onclick="submitReq()">Anfrage senden</button>
     </div>
     <div class="msuccess" id="msuccess">
       <div class="msuccess-icon">✓</div>
@@ -912,6 +915,12 @@ function initApp(){
 function tick(){set('clock',new Date().toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));}
 setInterval(tick,1000);
 
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape') return;
+  if(document.getElementById('modal').classList.contains('on')) closeModal();
+  else if(document.getElementById('detailPanel').classList.contains('on')) closeDetail();
+});
+
 /* ============================================================
    VIEW SWITCHER
 ============================================================ */
@@ -1046,10 +1055,12 @@ function selectHospital(h){
   if(s==='r'){btn.disabled=true;btn.textContent='Voll — Keine Kapazität';}
   else{btn.disabled=false;btn.textContent='OP-Kapazität anfragen →';}
   document.getElementById('detailPanel').classList.add('on');
+  document.getElementById('dpBackdrop').classList.add('on');
 }
 
 function closeDetail(){
   document.getElementById('detailPanel').classList.remove('on');
+  document.getElementById('dpBackdrop').classList.remove('on');
   selectedH=null;
   document.querySelectorAll('.hcard').forEach(c=>c.classList.remove('sel'));
 }
@@ -1249,6 +1260,8 @@ function openModal(){
   document.getElementById('mfooter').style.display='flex';
   document.getElementById('mhead').style.display='flex';
   document.getElementById('msuccess').classList.remove('on');
+  const btn=document.getElementById('mSubmitBtn');
+  btn.disabled=false; btn.textContent='Anfrage senden';
   document.getElementById('modal').classList.add('on');
 }
 function closeModal(){document.getElementById('modal').classList.remove('on');}
@@ -1258,6 +1271,9 @@ async function submitReq(){
   const fach=document.getElementById('mFach').value;
   const prioRaw=document.getElementById('mPrio').value;
   const prio=prioRaw.split(' ')[0]; // "Normal", "Dringend", "Notfall"
+
+  const btn=document.getElementById('mSubmitBtn');
+  btn.disabled=true; btn.textContent='Wird gesendet…';
 
   if(SUPABASE_CONFIGURED){
     // Insert into the shared Supabase table — realtime pushes it to every
@@ -1269,11 +1285,17 @@ async function submitReq(){
       prio,
       status: 'pending'
     });
-    if(error){console.error('submitReq',error);return;}
+    if(error){
+      console.error('submitReq',error);
+      btn.disabled=false; btn.textContent='Anfrage senden';
+      return;
+    }
   } else {
     TRANSFERS.unshift({id:Date.now(),tid,from:CU?CU.hospital:'Unbekannt',fach,prio,time:T(),status:'pending'});
     renderTR(); updateBadge(); recalc();
   }
+
+  btn.disabled=false; btn.textContent='Anfrage senden';
 
   // Show success
   document.getElementById('mbody').style.display='none';
