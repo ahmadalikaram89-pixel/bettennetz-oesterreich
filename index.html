@@ -461,6 +461,7 @@ body.light .dash-sidebar { box-shadow: 2px 0 8px rgba(0,0,0,0.06); }
       <div class="tlive"><div class="ldot"></div>Echtzeit</div>
       <div class="tclock" id="clock">--:--:--</div>
       <div class="rchip" id="rchip">—</div>
+      <button class="btn-logout" id="themeBtn" onclick="toggleTheme()" title="Design wechseln">🌙</button>
       <button class="btn-logout" onclick="logout()">Abmelden</button>
     </div>
   </header>
@@ -646,7 +647,7 @@ body.light .dash-sidebar { box-shadow: 2px 0 8px rgba(0,0,0,0.06); }
           <div class="sc">
             <div class="sch"><div class="sctitle">Verfügbare Fachrichtungen</div><div class="scmeta" id="fcount">0 aktiv</div></div>
             <div class="fgrid" id="fgrid"></div>
-            <div class="savebar"><div class="sbtime">Änderungen sofort sichtbar</div><button class="btn-save" onclick="recalc()">Speichern</button></div>
+            <div class="savebar"><div class="sbleft"><div class="sbtime">Änderungen sofort sichtbar</div><div class="toast" id="toastFach">✓ Gespeichert</div></div><button class="btn-save" onclick="saveFach()">Speichern</button></div>
           </div>
         </div>
       </div>
@@ -1084,7 +1085,13 @@ function recalc(){
   ];
   let totT=0,totF=0;
   rows.forEach(r=>{
-    const t=getV(r.t,r.def[0]),f=getV(r.f,r.def[1]);
+    const t=Math.max(0,getV(r.t,r.def[0]));
+    let f=Math.max(0,getV(r.f,r.def[1]));
+    if(f>t){
+      f=t;
+      const fe=document.getElementById(r.f);
+      if(fe) fe.value=f;
+    }
     totT+=t; totF+=f;
     const p=P(t,f),c=PC(p);
     const b=document.getElementById(r.bf);if(b){b.style.width=p+'%';b.style.background=c;}
@@ -1141,6 +1148,13 @@ function updateBadge(){
 function save(){
   set('lstime','Heute '+T()+' Uhr');
   const t=document.getElementById('toast');t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'),3000);
+}
+
+function saveFach(){
+  recalc();
+  const t=document.getElementById('toastFach');
+  t.classList.add('on');
   setTimeout(()=>t.classList.remove('on'),3000);
 }
 
