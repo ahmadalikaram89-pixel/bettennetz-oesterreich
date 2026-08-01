@@ -518,31 +518,31 @@ input,select{font-family:inherit;}
       </div>
 
       </div>
-      <!-- DETAIL PANEL -->
-      <div class="dp-backdrop" id="dpBackdrop" onclick="closeDetail()"></div>
-      <div class="detail-panel" id="detailPanel">
-        <div class="dp-head">
-          <button class="dp-close" onclick="closeDetail()">×</button>
-          <div class="dp-name" id="dpName">—</div>
-          <div class="dp-city" id="dpCity">—</div>
-        </div>
-        <div class="dp-body">
-          <div class="dp-section">OP-Kapazität</div>
-          <div id="dpCap"></div>
-          <div class="dp-section">Fachrichtungen</div>
-          <div class="fach-tags" id="dpFach"></div>
-          <button class="btn-request" id="dpReqBtn" onclick="openModal()">
-            OP-Kapazität anfragen →
-          </button>
-        </div>
-      </div>
-
       <!-- LEGEND -->
       <div class="map-legend">
         <div class="leg-title">OP-Auslastung</div>
         <div class="leg-row"><div class="leg-dot" style="background:var(--green)"></div>Verfügbar (&lt;60%)</div>
         <div class="leg-row"><div class="leg-dot" style="background:var(--amber)"></div>Begrenzt (60–85%)</div>
         <div class="leg-row"><div class="leg-dot" style="background:var(--red)"></div>Voll (&gt;85%)</div>
+      </div>
+    </div>
+
+    <!-- DETAIL PANEL -->
+    <div class="dp-backdrop" id="dpBackdrop" onclick="closeDetail()"></div>
+    <div class="detail-panel" id="detailPanel">
+      <div class="dp-head">
+        <button class="dp-close" onclick="closeDetail()">×</button>
+        <div class="dp-name" id="dpName">—</div>
+        <div class="dp-city" id="dpCity">—</div>
+      </div>
+      <div class="dp-body">
+        <div class="dp-section">OP-Kapazität</div>
+        <div id="dpCap"></div>
+        <div class="dp-section">Fachrichtungen</div>
+        <div class="fach-tags" id="dpFach"></div>
+        <button class="btn-request" id="dpReqBtn" onclick="openModal()">
+          OP-Kapazität anfragen →
+        </button>
       </div>
     </div>
   </div>
