@@ -629,9 +629,17 @@ input,select{font-family:inherit;}
         <div class="pheader"><div><div class="ptitle">Eingehende OP-Anfragen</div><div class="psub">Anonyme Anfragen · Keine Patientendaten gespeichert</div></div></div>
         <div class="pbody">
           <div class="sc">
+            <div class="sch"><div class="sctitle">Eingehend</div><div class="scmeta">An uns gerichtet</div></div>
             <div class="tscroll"><table class="dtable">
               <thead><tr><th>Anfrage-ID</th><th>Von Krankenhaus</th><th>OP-Fachbereich</th><th>Priorität</th><th>Eingang</th><th>Status</th><th>Aktion</th></tr></thead>
               <tbody id="tbody"></tbody>
+            </table></div>
+          </div>
+          <div class="sc mt13">
+            <div class="sch"><div class="sctitle">Gesendet</div><div class="scmeta">Von uns angefragt · Code fürs Patient-Handover bei Annahme</div></div>
+            <div class="tscroll"><table class="dtable">
+              <thead><tr><th>Anfrage-ID</th><th>An Krankenhaus</th><th>OP-Fachbereich</th><th>Priorität</th><th>Eingang</th><th>Status</th><th>Code für Patient</th></tr></thead>
+              <tbody id="tbodySent"></tbody>
             </table></div>
           </div>
         </div>
@@ -751,14 +759,14 @@ const sb = SUPABASE_CONFIGURED ? supabase.createClient(SUPABASE_URL, SUPABASE_AN
 
 // Local fallback so the prototype still works standalone until Supabase is wired up.
 let TRANSFERS = [
-  {id:1,tid:'TRF-2847',from:'LKH Univ. Graz',      fach:'Herzchirurgie / Kardiologie',  prio:'Notfall', time:'08:14',status:'pending'},
-  {id:2,tid:'TRF-2846',from:'Klinikum Wels',        fach:'Allgemeinchirurgie',            prio:'Dringend',time:'07:52',status:'pending'},
-  {id:3,tid:'TRF-2831',from:'LKH Salzburg',         fach:'Orthopädie / Unfallchirurgie',  prio:'Normal',  time:'06:30',status:'accepted'},
+  {id:1,tid:'TRF-2847',from:'LKH Univ. Graz',      to:'AKH Wien', fach:'Herzchirurgie / Kardiologie',  prio:'Notfall', time:'08:14',status:'pending'},
+  {id:2,tid:'TRF-2846',from:'Klinikum Wels',        to:'AKH Wien', fach:'Allgemeinchirurgie',            prio:'Dringend',time:'07:52',status:'pending'},
+  {id:3,tid:'TRF-2831',from:'LKH Salzburg',         to:'AKH Wien', fach:'Orthopädie / Unfallchirurgie',  prio:'Normal',  time:'06:30',status:'accepted'},
 ];
 let transfersChannel = null;
 
 function rowToTransfer(r){
-  return {id:r.id, tid:r.tid, from:r.from_hospital, fach:r.fach, prio:r.prio,
+  return {id:r.id, tid:r.tid, from:r.from_hospital, to:r.to_hospital, fach:r.fach, prio:r.prio,
           time:new Date(r.created_at).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'}), status:r.status};
 }
 
@@ -768,7 +776,7 @@ async function loadTransfers(){
     if(error){console.error('loadTransfers',error);return;}
     TRANSFERS = data.map(rowToTransfer);
   }
-  renderTR(); updateBadge(); recalc();
+  renderTR(); renderSent(); updateBadge(); recalc();
 }
 
 function subscribeTransfers(){
@@ -780,7 +788,7 @@ function subscribeTransfers(){
       } else if(payload.eventType==='UPDATE'){
         TRANSFERS = TRANSFERS.map(t=>t.id===payload.new.id?rowToTransfer(payload.new):t);
       }
-      renderTR(); updateBadge(); recalc();
+      renderTR(); renderSent(); updateBadge(); recalc();
     })
     .subscribe();
 }
@@ -1136,7 +1144,7 @@ function updOv(totT,totF){
   const el=document.getElementById('ovpct');
   if(el){el.textContent=p+'%';el.style.color=PC(p);}
   set('ovstand',T()+' Uhr');
-  const pend=TRANSFERS.filter(t=>t.status==='pending').length;
+  const pend=TRANSFERS.filter(t=>t.status==='pending'&&t.to===CU.hospital).length;
   set('ovpc',pend); updateBadge();
   if(CU){
     set('pv1n',CU.hospital); set('pv1c',CU.city+' · '+CU.bl);
@@ -1155,7 +1163,7 @@ function updPv(totT,totF){
 }
 
 function updateBadge(){
-  const pend=TRANSFERS.filter(t=>t.status==='pending').length;
+  const pend=TRANSFERS.filter(t=>t.status==='pending'&&t.to===CU?.hospital).length;
   const b=document.getElementById('tbadge');
   if(b)b.textContent=pend>0?pend:'';
 }
@@ -1197,12 +1205,13 @@ function togF(el){
 }
 
 function renderTR(){
-  const tb=document.getElementById('tbody');if(!tb)return;
-  if(!TRANSFERS.length){
+  const tb=document.getElementById('tbody');if(!tb||!CU)return;
+  const incoming=TRANSFERS.filter(t=>t.to===CU.hospital);
+  if(!incoming.length){
     tb.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="eico">📭</div><div class="etxt">Keine Anfragen</div></div></td></tr>`;
     return;
   }
-  tb.innerHTML=TRANSFERS.map(t=>{
+  tb.innerHTML=incoming.map(t=>{
     const pc=t.prio==='Notfall'?'prio-n':t.prio.startsWith('Dringend')?'prio-d':'prio-m';
     const sc=t.status==='pending'?'chip-a':t.status==='accepted'?'chip-g':'chip-r';
     const sl=t.status==='pending'?'Ausstehend':t.status==='accepted'?'Angenommen':'Abgelehnt';
@@ -1221,14 +1230,60 @@ function renderTR(){
   }).join('');
 }
 
+function renderSent(){
+  const tb=document.getElementById('tbodySent');if(!tb||!CU)return;
+  const sent=TRANSFERS.filter(t=>t.from===CU.hospital);
+  if(!sent.length){
+    tb.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="eico">📤</div><div class="etxt">Keine gesendeten Anfragen</div></div></td></tr>`;
+    return;
+  }
+  tb.innerHTML=sent.map(t=>{
+    const pc=t.prio==='Notfall'?'prio-n':t.prio.startsWith('Dringend')?'prio-d':'prio-m';
+    const sc=t.status==='pending'?'chip-a':t.status==='accepted'?'chip-g':'chip-r';
+    const sl=t.status==='pending'?'Ausstehend':t.status==='accepted'?'Angenommen':'Abgelehnt';
+    const code=t.status==='accepted'
+      ?`<div class="mtrf-id" style="margin-top:0;padding:3px 10px;font-size:12px;">${t.tid}</div>`
+      :`<span style="color:var(--t3);font-size:12px">—</span>`;
+    return `<tr>
+      <td><div class="pname" style="font-family:'JetBrains Mono',monospace;font-size:13px">${t.tid}</div><div class="psv">Keine Patientendaten</div></td>
+      <td>${t.to}</td>
+      <td><div class="chip chip-b" style="font-size:11px">${t.fach}</div></td>
+      <td class="${pc}">${t.prio}</td>
+      <td class="ctime">${t.time}</td>
+      <td><div class="chip ${sc}">${sl}</div></td>
+      <td>${code}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Maps a Fachbereich to its OP-Kapazität row key; specialties with no
+// dedicated capacity row (Gynäkologie, Urologie, ...) simply aren't decremented.
+const FACH_CAP_KEY = {
+  'Allgemeinchirurgie':'G',
+  'Herzchirurgie / Kardiologie':'H',
+  'Neurochirurgie':'N',
+  'Orthopädie / Unfallchirurgie':'O',
+};
+
+function reserveCapacity(fach){
+  const key=FACH_CAP_KEY[fach];
+  const freeInput=key&&document.getElementById('op'+key+'F');
+  if(!freeInput) return;
+  freeInput.value=Math.max(0,(+freeInput.value||0)-1);
+  recalc();
+}
+
 async function act(id,s){
+  const t=TRANSFERS.find(t=>t.id===id);
   if(SUPABASE_CONFIGURED){
     const {error}=await sb.from('transfers').update({status:s}).eq('id',id);
     if(error){console.error('act',error);return;}
   }
   // optimistic local update; if configured, the realtime UPDATE event confirms/no-ops
   TRANSFERS=TRANSFERS.map(t=>t.id===id?{...t,status:s}:t);
-  renderTR(); updateBadge(); recalc();
+  // Confirmed acceptance = a real reservation: hold the bed now to avoid double-booking.
+  if(s==='accepted'&&t) reserveCapacity(t.fach);
+  renderTR(); renderSent(); updateBadge(); recalc();
 }
 
 /* ============================================================
@@ -1284,6 +1339,7 @@ function closeModal(){document.getElementById('modal').classList.remove('on');}
 
 async function submitReq(){
   const tid='TRF-'+Math.floor(2000+Math.random()*900);
+  const to=selectedH?selectedH.n:'Unbekannt';
   const fach=document.getElementById('mFach').value;
   const prioRaw=document.getElementById('mPrio').value;
   const prio=prioRaw.split(' ')[0]; // "Normal", "Dringend", "Notfall"
@@ -1297,6 +1353,7 @@ async function submitReq(){
     const {error}=await sb.from('transfers').insert({
       tid,
       from_hospital: CU ? CU.hospital : 'Unbekannt',
+      to_hospital: to,
       fach,
       prio,
       status: 'pending'
@@ -1307,8 +1364,8 @@ async function submitReq(){
       return;
     }
   } else {
-    TRANSFERS.unshift({id:Date.now(),tid,from:CU?CU.hospital:'Unbekannt',fach,prio,time:T(),status:'pending'});
-    renderTR(); updateBadge(); recalc();
+    TRANSFERS.unshift({id:Date.now(),tid,from:CU?CU.hospital:'Unbekannt',to,fach,prio,time:T(),status:'pending'});
+    renderTR(); renderSent(); updateBadge(); recalc();
   }
 
   btn.disabled=false; btn.textContent='Anfrage senden';

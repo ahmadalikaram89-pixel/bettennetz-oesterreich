@@ -5,6 +5,7 @@ create table if not exists transfers (
   id uuid primary key default gen_random_uuid(),
   tid text not null unique,
   from_hospital text not null,
+  to_hospital text not null,
   fach text not null,
   prio text not null,
   status text not null default 'pending' check (status in ('pending','accepted','declined')),
@@ -28,9 +29,9 @@ create policy "transfers_update_anon" on transfers
 alter publication supabase_realtime add table transfers;
 
 -- Seed with the same demo rows the static prototype used to ship with.
-insert into transfers (tid, from_hospital, fach, prio, status, created_at)
+insert into transfers (tid, from_hospital, to_hospital, fach, prio, status, created_at)
 values
-  ('TRF-2847', 'LKH Univ. Graz',   'Herzchirurgie / Kardiologie',     'Notfall',  'pending',  now() - interval '2 hour'),
-  ('TRF-2846', 'Klinikum Wels',    'Allgemeinchirurgie',              'Dringend', 'pending',  now() - interval '2.5 hour'),
-  ('TRF-2831', 'LKH Salzburg',     'Orthopädie / Unfallchirurgie',    'Normal',   'accepted', now() - interval '4 hour')
+  ('TRF-2847', 'LKH Univ. Graz',   'AKH Wien', 'Herzchirurgie / Kardiologie',     'Notfall',  'pending',  now() - interval '2 hour'),
+  ('TRF-2846', 'Klinikum Wels',    'AKH Wien', 'Allgemeinchirurgie',              'Dringend', 'pending',  now() - interval '2.5 hour'),
+  ('TRF-2831', 'LKH Salzburg',     'AKH Wien', 'Orthopädie / Unfallchirurgie',    'Normal',   'accepted', now() - interval '4 hour')
 on conflict (tid) do nothing;
