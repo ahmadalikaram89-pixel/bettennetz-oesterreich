@@ -234,6 +234,9 @@ input,select{font-family:inherit;}
 
 /* CAP TABLE */
 .tscroll{overflow-x:auto;}
+.addcat-row{display:flex;gap:8px;align-items:center;padding:11px 17px;border-top:1px solid var(--border-s);}
+.addcat-row .finput{margin-bottom:0;flex:1;}
+.addcat-row button:disabled{opacity:.5;cursor:not-allowed;}
 .ctable{width:100%;border-collapse:collapse;}
 .ctable thead th{padding:8px 17px;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;text-align:left;border-bottom:1px solid var(--border);}
 .ctable thead th:not(:first-child){text-align:center;}
@@ -593,13 +596,12 @@ input,select{font-family:inherit;}
                 <div class="sch"><div class="sctitle">OP-Säle heute</div><div class="scmeta">Intern · exakte Zahlen nicht öffentlich</div></div>
                 <div class="tscroll"><table class="ctable">
                   <thead><tr><th>Kategorie</th><th>Gesamt</th><th>Frei heute</th><th>Auslastung</th></tr></thead>
-                  <tbody>
-                    <tr><td><div class="ctype">Allgemein-OP</div><div class="csub">Alle Fachrichtungen</div></td><td class="cnc"><input class="cni" id="opGT" type="number" min="0" value="8" oninput="recalc()"></td><td class="cnc"><input class="cni" id="opGF" type="number" min="0" value="3" oninput="recalc()"></td><td class="cbar"><div class="cbarw"><div class="cbtrack"><div class="cbfill" id="bfG"></div></div><div class="cbpct" id="pcG"></div></div></td></tr>
-                    <tr><td><div class="ctype">Herzchirurgie</div><div class="csub">Kardiologie / Herzchirurgie</div></td><td class="cnc"><input class="cni" id="opHT" type="number" min="0" value="3" oninput="recalc()"></td><td class="cnc"><input class="cni" id="opHF" type="number" min="0" value="1" oninput="recalc()"></td><td class="cbar"><div class="cbarw"><div class="cbtrack"><div class="cbfill" id="bfH"></div></div><div class="cbpct" id="pcH"></div></div></td></tr>
-                    <tr><td><div class="ctype">Neurochirurgie</div><div class="csub">Spezialisierter Eingriff</div></td><td class="cnc"><input class="cni" id="opNT" type="number" min="0" value="2" oninput="recalc()"></td><td class="cnc"><input class="cni" id="opNF" type="number" min="0" value="0" oninput="recalc()"></td><td class="cbar"><div class="cbarw"><div class="cbtrack"><div class="cbfill" id="bfN"></div></div><div class="cbpct" id="pcN"></div></div></td></tr>
-                    <tr><td><div class="ctype">Orthopädie / Unfallchirurgie</div><div class="csub">Spezialisierter Eingriff</div></td><td class="cnc"><input class="cni" id="opOT" type="number" min="0" value="4" oninput="recalc()"></td><td class="cnc"><input class="cni" id="opOF" type="number" min="0" value="2" oninput="recalc()"></td><td class="cbar"><div class="cbarw"><div class="cbtrack"><div class="cbfill" id="bfO"></div></div><div class="cbpct" id="pcO"></div></div></td></tr>
-                  </tbody>
+                  <tbody id="opCatBody"></tbody>
                 </table></div>
+                <div class="addcat-row" id="addCatRow">
+                  <select class="finput" id="newCatFach"></select>
+                  <button class="btn-secondary" onclick="addCategory()">+ Kategorie hinzufügen</button>
+                </div>
                 <div class="savebar"><div class="sbleft"><div class="sbtime">Zuletzt: <span id="lstime">—</span></div><div class="toast" id="toast">✓ Gespeichert</div></div><button class="btn-save" onclick="save()">Speichern & veröffentlichen</button></div>
               </div>
             </div>
@@ -701,6 +703,7 @@ input,select{font-family:inherit;}
             <option>Neurochirurgie</option>
             <option>Orthopädie / Unfallchirurgie</option>
             <option>Gynäkologie</option>
+            <option>Geburtshilfe / Entbindung</option>
             <option>Urologie</option>
             <option>Onkologie</option>
           </select>
@@ -746,7 +749,17 @@ const ACCS = {
 };
 const RLABEL = {admin:'Administrator', staff:'Pflegepersonal', goeg:'GÖG · Vollzugriff'};
 
-const FAECHERLIST = ['Allgemeinchirurgie','Herzchirurgie / Kardiologie','Neurochirurgie','Orthopädie / Unfallchirurgie','Gynäkologie','Urologie','Onkologie','Pädiatrische Chirurgie','Gefäßchirurgie'];
+const FAECHERLIST = ['Allgemeinchirurgie','Herzchirurgie / Kardiologie','Neurochirurgie','Orthopädie / Unfallchirurgie','Gynäkologie','Geburtshilfe / Entbindung','Urologie','Onkologie','Pädiatrische Chirurgie','Gefäßchirurgie'];
+
+// OP-Kapazität categories for the logged-in hospital's own OP-Säle table.
+// Starts with the four defaults; a hospital can add more (e.g. Geburtshilfe)
+// via the "+ Kategorie hinzufügen" control.
+let OP_CATEGORIES = [
+  {key:'G', label:'Allgemein-OP',                  sub:'Alle Fachrichtungen',           fach:'Allgemeinchirurgie',             total:8, free:3},
+  {key:'H', label:'Herzchirurgie',                 sub:'Kardiologie / Herzchirurgie',   fach:'Herzchirurgie / Kardiologie',    total:3, free:1},
+  {key:'N', label:'Neurochirurgie',                sub:'Spezialisierter Eingriff',      fach:'Neurochirurgie',                 total:2, free:0},
+  {key:'O', label:'Orthopädie / Unfallchirurgie',  sub:'Spezialisierter Eingriff',      fach:'Orthopädie / Unfallchirurgie',   total:4, free:2},
+];
 
 // Supabase — shared transfer store, synced in real time across all hospitals.
 // Not wired up yet: fill these in once the Supabase project exists, and
@@ -917,6 +930,7 @@ function initApp(){
   }
 
   renderPins(); renderList(); renderFach(); renderHist();
+  renderOpTable(); renderAddCatSelect();
   recalc(); updateMapStats(); tick();
   loadTransfers(); subscribeTransfers();
 }
@@ -1103,27 +1117,67 @@ function showPanel(id,btn){
    DASHBOARD RECALC
 ============================================================ */
 function recalc(){
-  const rows=[
-    {t:'opGT',f:'opGF',bf:'bfG',pc:'pcG',def:[8,3]},
-    {t:'opHT',f:'opHF',bf:'bfH',pc:'pcH',def:[3,1]},
-    {t:'opNT',f:'opNF',bf:'bfN',pc:'pcN',def:[2,0]},
-    {t:'opOT',f:'opOF',bf:'bfO',pc:'pcO',def:[4,2]},
-  ];
   let totT=0,totF=0;
-  rows.forEach(r=>{
-    const t=Math.max(0,getV(r.t,r.def[0]));
-    let f=Math.max(0,getV(r.f,r.def[1]));
+  OP_CATEGORIES.forEach(c=>{
+    const tId='op'+c.key+'T', fId='op'+c.key+'F';
+    const t=Math.max(0,getV(tId,c.total));
+    let f=Math.max(0,getV(fId,c.free));
     if(f>t){
       f=t;
-      const fe=document.getElementById(r.f);
+      const fe=document.getElementById(fId);
       if(fe) fe.value=f;
     }
     totT+=t; totF+=f;
-    const p=P(t,f),c=PC(p);
-    const b=document.getElementById(r.bf);if(b){b.style.width=p+'%';b.style.background=c;}
-    const pe=document.getElementById(r.pc);if(pe){pe.textContent=p+'%';pe.style.color=c;}
+    const p=P(t,f),col=PC(p);
+    const b=document.getElementById('bf'+c.key);if(b){b.style.width=p+'%';b.style.background=col;}
+    const pe=document.getElementById('pc'+c.key);if(pe){pe.textContent=p+'%';pe.style.color=col;}
   });
   updOv(totT,totF); updPv(totT,totF);
+}
+
+function renderOpTable(){
+  const tb=document.getElementById('opCatBody');
+  if(!tb) return;
+  tb.innerHTML=OP_CATEGORIES.map(c=>`
+    <tr>
+      <td><div class="ctype">${c.label}</div><div class="csub">${c.sub}</div></td>
+      <td class="cnc"><input class="cni" id="op${c.key}T" type="number" min="0" value="${c.total}" oninput="recalc()"></td>
+      <td class="cnc"><input class="cni" id="op${c.key}F" type="number" min="0" value="${c.free}" oninput="recalc()"></td>
+      <td class="cbar"><div class="cbarw"><div class="cbtrack"><div class="cbfill" id="bf${c.key}"></div></div><div class="cbpct" id="pc${c.key}"></div></div></td>
+    </tr>`).join('');
+}
+
+function keyFromFach(fach,existingKeys){
+  const base=(fach.match(/[A-Za-zÄÖÜäöü]/)||['X'])[0].toUpperCase();
+  let key=base,i=1;
+  while(existingKeys.includes(key)) key=base+(i++);
+  return key;
+}
+
+function renderAddCatSelect(){
+  const sel=document.getElementById('newCatFach');
+  if(!sel) return;
+  const btn=document.querySelector('#addCatRow button');
+  const used=OP_CATEGORIES.map(c=>c.fach);
+  const avail=FAECHERLIST.filter(f=>!used.includes(f));
+  if(!avail.length){
+    sel.innerHTML='<option>Alle Fachrichtungen bereits hinzugefügt</option>';
+    sel.disabled=true; if(btn) btn.disabled=true;
+  } else {
+    sel.innerHTML=avail.map(f=>`<option>${f}</option>`).join('');
+    sel.disabled=false; if(btn) btn.disabled=false;
+  }
+}
+
+function addCategory(){
+  const sel=document.getElementById('newCatFach');
+  if(!sel||sel.disabled) return;
+  const fach=sel.value;
+  const key=keyFromFach(fach,OP_CATEGORIES.map(c=>c.key));
+  OP_CATEGORIES.push({key, label:fach, sub:'Neue Kategorie', fach, total:0, free:0});
+  renderOpTable();
+  renderAddCatSelect();
+  recalc();
 }
 
 function buildTags(totT,totF){
@@ -1258,16 +1312,9 @@ function renderSent(){
 
 // Maps a Fachbereich to its OP-Kapazität row key; specialties with no
 // dedicated capacity row (Gynäkologie, Urologie, ...) simply aren't decremented.
-const FACH_CAP_KEY = {
-  'Allgemeinchirurgie':'G',
-  'Herzchirurgie / Kardiologie':'H',
-  'Neurochirurgie':'N',
-  'Orthopädie / Unfallchirurgie':'O',
-};
-
 function reserveCapacity(fach){
-  const key=FACH_CAP_KEY[fach];
-  const freeInput=key&&document.getElementById('op'+key+'F');
+  const cat=OP_CATEGORIES.find(c=>c.fach===fach);
+  const freeInput=cat&&document.getElementById('op'+cat.key+'F');
   if(!freeInput) return;
   freeInput.value=Math.max(0,(+freeInput.value||0)-1);
   recalc();
