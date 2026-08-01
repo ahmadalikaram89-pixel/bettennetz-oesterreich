@@ -886,6 +886,10 @@ function set(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
 function getV(id,def){return+(document.getElementById(id)?.value??def);}
 function statusLabel(s){return s==='g'?'Verfügbar':s==='a'?'Begrenzt':'Voll';}
 function statusChipClass(s){return s==='g'?'chip-g':s==='a'?'chip-a':'chip-r';}
+// Transfers can (once Supabase is wired up) be written by any client holding
+// the anon key, not just this UI's fixed <select> options — so anything from
+// TRANSFERS is untrusted and must be escaped before going into innerHTML.
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 /* ============================================================
    LOGIN
@@ -1026,9 +1030,10 @@ function renderList(){
         <div class="sbadge ${s}">${statusLabel(s)}</div>
       </div>
       <div class="capbars">
-        <div class="caprow"><div class="caplabel">Allgemein-OP</div><div class="captrack"><div class="capfill" style="width:${h.ops.g?'40':'100'}%;background:${h.ops.g?'var(--green)':'var(--red)'}"></div></div><div class="capnum">${h.ops.g} frei</div></div>
-        <div class="caprow"><div class="caplabel">Herzchirurgie</div><div class="captrack"><div class="capfill" style="width:${h.ops.h?'35':'100'}%;background:${h.ops.h?'var(--green)':'var(--red)'}"></div></div><div class="capnum">${h.ops.h} frei</div></div>
-        <div class="caprow"><div class="caplabel">Orthopädie</div><div class="captrack"><div class="capfill" style="width:${h.ops.o?'45':'100'}%;background:${h.ops.o?'var(--green)':'var(--red)'}"></div></div><div class="capnum">${h.ops.o} frei</div></div>
+        ${[['Allgemein-OP',h.ops.g,8],['Herzchirurgie',h.ops.h,3],['Orthopädie',h.ops.o,4]].map(([label,free,max])=>{
+          const p=P(max,free),c2=PC(p);
+          return `<div class="caprow"><div class="caplabel">${label}</div><div class="captrack"><div class="capfill" style="width:${p}%;background:${c2}"></div></div><div class="capnum">${free} frei</div></div>`;
+        }).join('')}
       </div>
     </div>`;
   }).join('');
@@ -1133,6 +1138,7 @@ function recalc(){
       const fe=document.getElementById(fId);
       if(fe) fe.value=f;
     }
+    c.total=t; c.free=f;
     totT+=t; totF+=f;
     const p=P(t,f),col=PC(p);
     const b=document.getElementById('bf'+c.key);if(b){b.style.width=p+'%';b.style.background=col;}
@@ -1231,7 +1237,31 @@ function updateBadge(){
 /* ============================================================
    SAVE
 ============================================================ */
+// Maps the four default OP-Kapazität categories to the matching HOSPITALS
+// ops key. Custom categories a hospital adds on top of the defaults have
+// no slot on the map/sidebar (which only ever showed these four) and are
+// intentionally not published there.
+const FACH_TO_OPS_KEY = {
+  'Allgemeinchirurgie':'g',
+  'Herzchirurgie / Kardiologie':'h',
+  'Neurochirurgie':'n',
+  'Orthopädie / Unfallchirurgie':'o',
+};
+
+function publishToMap(){
+  const h=HOSPITALS.find(x=>x.n===CU?.hospital);
+  if(!h) return;
+  OP_CATEGORIES.forEach(c=>{
+    const key=FACH_TO_OPS_KEY[c.fach];
+    if(key) h.ops[key]=c.free;
+  });
+  h.fach=AF.slice();
+  renderPins(); renderList(); updateMapStats();
+  if(selectedH?.id===h.id) selectHospital(h);
+}
+
 function save(){
+  publishToMap();
   set('lstime','Heute '+T()+' Uhr');
   const t=document.getElementById('toast');t.classList.add('on');
   setTimeout(()=>t.classList.remove('on'),3000);
@@ -1239,6 +1269,7 @@ function save(){
 
 function saveFach(){
   recalc();
+  publishToMap();
   const t=document.getElementById('toastFach');
   t.classList.add('on');
   setTimeout(()=>t.classList.remove('on'),3000);
@@ -1279,11 +1310,11 @@ function renderTR(){
       ?`<div class="acts"><button class="btn-acc" onclick="act('${t.id}','accepted')">Annehmen</button><button class="btn-dec" onclick="act('${t.id}','declined')">Ablehnen</button></div>`
       :`<span style="color:var(--t3);font-size:12px">—</span>`;
     return `<tr>
-      <td><div class="pname" style="font-family:'JetBrains Mono',monospace;font-size:13px">${t.tid}</div><div class="psv">Keine Patientendaten</div></td>
-      <td>${t.from}</td>
-      <td><div class="chip chip-b" style="font-size:11px">${t.fach}</div></td>
-      <td class="${pc}">${t.prio}</td>
-      <td class="ctime">${t.time}</td>
+      <td><div class="pname" style="font-family:'JetBrains Mono',monospace;font-size:13px">${esc(t.tid)}</div><div class="psv">Keine Patientendaten</div></td>
+      <td>${esc(t.from)}</td>
+      <td><div class="chip chip-b" style="font-size:11px">${esc(t.fach)}</div></td>
+      <td class="${pc}">${esc(t.prio)}</td>
+      <td class="ctime">${esc(t.time)}</td>
       <td><div class="chip ${sc}">${sl}</div></td>
       <td>${acts}</td>
     </tr>`;
@@ -1302,14 +1333,14 @@ function renderSent(){
     const sc=t.status==='pending'?'chip-a':t.status==='accepted'?'chip-g':'chip-r';
     const sl=t.status==='pending'?'Ausstehend':t.status==='accepted'?'Angenommen':'Abgelehnt';
     const code=t.status==='accepted'
-      ?`<div class="mtrf-id" style="margin-top:0;padding:3px 10px;font-size:12px;">${t.tid}</div>`
+      ?`<div class="mtrf-id" style="margin-top:0;padding:3px 10px;font-size:12px;">${esc(t.tid)}</div>`
       :`<span style="color:var(--t3);font-size:12px">—</span>`;
     return `<tr>
-      <td><div class="pname" style="font-family:'JetBrains Mono',monospace;font-size:13px">${t.tid}</div><div class="psv">Keine Patientendaten</div></td>
-      <td>${t.to}</td>
-      <td><div class="chip chip-b" style="font-size:11px">${t.fach}</div></td>
-      <td class="${pc}">${t.prio}</td>
-      <td class="ctime">${t.time}</td>
+      <td><div class="pname" style="font-family:'JetBrains Mono',monospace;font-size:13px">${esc(t.tid)}</div><div class="psv">Keine Patientendaten</div></td>
+      <td>${esc(t.to)}</td>
+      <td><div class="chip chip-b" style="font-size:11px">${esc(t.fach)}</div></td>
+      <td class="${pc}">${esc(t.prio)}</td>
+      <td class="ctime">${esc(t.time)}</td>
       <td><div class="chip ${sc}">${sl}</div></td>
       <td>${code}</td>
     </tr>`;
@@ -1327,13 +1358,13 @@ function reserveCapacity(fach){
 }
 
 async function act(id,s){
-  const t=TRANSFERS.find(t=>t.id===id);
+  const t=TRANSFERS.find(t=>String(t.id)===String(id));
   if(SUPABASE_CONFIGURED){
     const {error}=await sb.from('transfers').update({status:s}).eq('id',id);
     if(error){console.error('act',error);return;}
   }
   // optimistic local update; if configured, the realtime UPDATE event confirms/no-ops
-  TRANSFERS=TRANSFERS.map(t=>t.id===id?{...t,status:s}:t);
+  TRANSFERS=TRANSFERS.map(t=>String(t.id)===String(id)?{...t,status:s}:t);
   // Confirmed acceptance = a real reservation: hold the bed now to avoid double-booking.
   if(s==='accepted'&&t) reserveCapacity(t.fach);
   renderTR(); renderSent(); updateBadge(); recalc();

@@ -4,10 +4,14 @@
 create table if not exists transfers (
   id uuid primary key default gen_random_uuid(),
   tid text not null unique,
-  from_hospital text not null,
-  to_hospital text not null,
-  fach text not null,
-  prio text not null,
+  from_hospital text not null check (char_length(from_hospital) between 1 and 120),
+  to_hospital text not null check (char_length(to_hospital) between 1 and 120),
+  fach text not null check (fach in (
+    'Allgemeinchirurgie','Herzchirurgie / Kardiologie','Neurochirurgie',
+    'Orthopädie / Unfallchirurgie','Gynäkologie','Geburtshilfe / Entbindung',
+    'Urologie','Onkologie'
+  )),
+  prio text not null check (prio in ('Normal','Dringend','Notfall')),
   status text not null default 'pending' check (status in ('pending','accepted','declined')),
   created_at timestamptz not null default now()
 );
