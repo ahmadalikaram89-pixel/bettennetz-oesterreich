@@ -10,6 +10,7 @@
 - Zwei weitere kleine Fixes: Enter im Benutzername-Feld loggt jetzt auch ein, Suchfeld hat einen ×-Button zum Löschen
 - Anfragen sind jetzt an ein Ziel-Krankenhaus geroutet (`to_hospital`) statt ein globaler Posteingang für alle zu sein; "Eingehend" zeigt nur an uns gerichtete Anfragen
 - Bestätigte Reservierung: Annahme einer Anfrage reduziert sofort die passende OP-Kapazität ("Frei heute") des annehmenden Krankenhauses, um Doppelbuchungen zu vermeiden — und die Anfrage-ID wird im neuen "Gesendet"-Tab als Code fürs Patienten-Handover angezeigt
+- OP-Kapazität-Kategorien sind jetzt erweiterbar: Krankenhäuser können per "+ Kategorie hinzufügen" eigene Kategorien (z. B. Geburtshilfe / Entbindung) aus den noch nicht belegten Fachrichtungen ergänzen, statt auf die 4 festen Kategorien beschränkt zu sein
 
 ## Offen
 - [ ] Supabase-Projekt anlegen/verbinden (Projekt-URL + anon key in `index.html` eintragen), `supabase/schema.sql` ausführen
