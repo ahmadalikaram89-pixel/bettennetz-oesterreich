@@ -776,6 +776,14 @@ const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
 const SUPABASE_CONFIGURED = SUPABASE_URL.startsWith('http');
 const sb = SUPABASE_CONFIGURED ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
+// Once real Supabase Auth is wired up, the login screen's plaintext demo
+// credentials no longer apply (and shouldn't be advertised) — real accounts
+// are provisioned via hospital_profiles instead, see supabase/schema.sql.
+if(SUPABASE_CONFIGURED){
+  const laccs=document.querySelector('.laccs');
+  if(laccs) laccs.style.display='none';
+}
+
 // Local fallback so the prototype still works standalone until Supabase is wired up.
 let TRANSFERS = [
   {id:1,tid:'TRF-2847',from:'LKH Univ. Graz',      to:'AKH Wien', fach:'Herzchirurgie / Kardiologie',  prio:'Notfall', time:'08:14',status:'pending'},
@@ -895,22 +903,56 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
    LOGIN
 ============================================================ */
 function fill(u,p){document.getElementById('lu').value=u;document.getElementById('lp').value=p;}
-function login(){
+
+function showLoginError(msg){
+  const e=document.getElementById('lerr');
+  if(msg) e.textContent=msg;
+  e.style.display='block';
+  setTimeout(()=>e.style.display='none',3000);
+}
+
+async function login(){
   const u=document.getElementById('lu').value.trim().toLowerCase();
   const p=document.getElementById('lp').value;
-  const a=ACCS[u];
-  if(a&&a.pass===p){
-    CU={...a,username:u};
-    document.getElementById('loginScreen').style.display='none';
-    document.getElementById('app').classList.add('on');
-    initApp();
+  const btn=document.querySelector('#loginScreen .btn-primary');
+
+  if(SUPABASE_CONFIGURED){
+    if(btn){btn.disabled=true;btn.textContent='Anmelden…';}
+    // Hospital accounts log in with a short username (e.g. "akh.wien"), but
+    // Supabase Auth needs an email — accounts are provisioned as
+    // "<username>@bettennetz.local" (see supabase/schema.sql).
+    const email=u.includes('@')?u:u+'@bettennetz.local';
+    const {data,error}=await sb.auth.signInWithPassword({email,password:p});
+    if(error||!data?.user){
+      if(btn){btn.disabled=false;btn.textContent='Anmelden';}
+      showLoginError('Ungültige Zugangsdaten.');
+      return;
+    }
+    const {data:profile,error:pErr}=await sb.from('hospital_profiles').select('*').eq('user_id',data.user.id).single();
+    if(pErr||!profile){
+      await sb.auth.signOut();
+      if(btn){btn.disabled=false;btn.textContent='Anmelden';}
+      showLoginError('Konto ohne Krankenhaus-Zuordnung. Bitte GÖG kontaktieren.');
+      return;
+    }
+    CU={username:u,hospital:profile.hospital,city:profile.city,bl:profile.bl,role:profile.role};
+    if(btn){btn.disabled=false;btn.textContent='Anmelden';}
   } else {
-    const e=document.getElementById('lerr');
-    e.style.display='block';
-    setTimeout(()=>e.style.display='none',3000);
+    const a=ACCS[u];
+    if(!(a&&a.pass===p)){
+      showLoginError('Ungültige Zugangsdaten.');
+      return;
+    }
+    CU={...a,username:u};
   }
+
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').classList.add('on');
+  initApp();
 }
-function logout(){
+
+async function logout(){
+  if(SUPABASE_CONFIGURED) await sb.auth.signOut();
   CU=null;
   if(transfersChannel){sb.removeChannel(transfersChannel);transfersChannel=null;}
   document.getElementById('loginScreen').style.display='flex';
