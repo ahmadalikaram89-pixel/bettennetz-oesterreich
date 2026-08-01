@@ -11,6 +11,8 @@
 - Anfragen sind jetzt an ein Ziel-Krankenhaus geroutet (`to_hospital`) statt ein globaler Posteingang für alle zu sein; "Eingehend" zeigt nur an uns gerichtete Anfragen
 - Bestätigte Reservierung: Annahme einer Anfrage reduziert sofort die passende OP-Kapazität ("Frei heute") des annehmenden Krankenhauses, um Doppelbuchungen zu vermeiden — und die Anfrage-ID wird im neuen "Gesendet"-Tab als Code fürs Patienten-Handover angezeigt
 - OP-Kapazität-Kategorien sind jetzt erweiterbar: Krankenhäuser können per "+ Kategorie hinzufügen" eigene Kategorien (z. B. Geburtshilfe / Entbindung) aus den noch nicht belegten Fachrichtungen ergänzen, statt auf die 4 festen Kategorien beschränkt zu sein
+- Echtes Logo eingebaut (`assets/logo.png`, freigestellt/rund zugeschnitten) — ersetzt das 🏥-Emoji in Login-Screen, Topbar und Favicon
+- Deployment jetzt auch über Vercel verfügbar (https://bettennetz-oesterreich.vercel.app/), zusätzlich zu GitHub Pages — beide folgen automatisch jedem Push auf `main`
 
 ## Offen
 - [ ] Supabase-Projekt anlegen/verbinden (Projekt-URL + anon key in `index.html` eintragen), `supabase/schema.sql` ausführen
