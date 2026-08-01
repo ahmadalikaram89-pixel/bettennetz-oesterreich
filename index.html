@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BettenNetz Österreich · OP-Kapazitätsvermittlung</title>
+<link rel="icon" type="image/png" href="assets/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -45,7 +46,8 @@ input,select{font-family:inherit;}
 #loginScreen{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:var(--bg);background-image:radial-gradient(ellipse 55% 50% at 20% 60%,rgba(26,111,176,0.07) 0%,transparent 100%),radial-gradient(ellipse 40% 40% at 80% 25%,rgba(16,185,129,0.04) 0%,transparent 100%);}
 .lw{width:380px;}
 .lmark{display:flex;align-items:center;gap:10px;margin-bottom:32px;}
-.lmark-icon{width:34px;height:34px;border-radius:8px;background:var(--accent-d);border:1px solid rgba(26,111,176,0.3);display:flex;align-items:center;justify-content:center;font-size:16px;}
+.lmark-icon{width:34px;height:34px;flex-shrink:0;}
+.lmark-icon img{width:100%;height:100%;object-fit:contain;display:block;}
 .lmark-name{font-family:'DM Sans',sans-serif;font-size:17px;font-weight:700;}
 .lmark-name em{color:var(--accent);font-style:normal;}
 .lcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:30px;box-shadow:0 8px 32px rgba(0,0,0,0.12);}
@@ -75,7 +77,8 @@ input,select{font-family:inherit;}
 /* TOPBAR */
 .topbar{height:var(--topbar);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;gap:14px;flex-shrink:0;z-index:50;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
 .tbrand{display:flex;align-items:center;gap:9px;width:var(--sidebar);flex-shrink:0;}
-.tbrand-icon{width:26px;height:26px;border-radius:6px;background:var(--accent-d);border:1px solid rgba(26,111,176,.3);display:flex;align-items:center;justify-content:center;font-size:12px;}
+.tbrand-icon{width:26px;height:26px;flex-shrink:0;}
+.tbrand-icon img{width:100%;height:100%;object-fit:contain;display:block;}
 .tbrand-name{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;}
 .tbrand-name em{color:var(--accent);font-style:normal;}
 .tdiv{width:1px;height:22px;background:var(--border);}
@@ -409,7 +412,7 @@ input,select{font-family:inherit;}
 <div id="loginScreen">
   <div class="lw">
     <div class="lmark">
-      <div class="lmark-icon">🏥</div>
+      <div class="lmark-icon"><img src="assets/logo.png" alt="BettenNetz Logo"></div>
       <div class="lmark-name">Betten<em>Netz</em> Österreich</div>
     </div>
     <div class="lcard">
@@ -446,7 +449,7 @@ input,select{font-family:inherit;}
   <!-- TOPBAR -->
   <header class="topbar">
     <div class="tbrand">
-      <div class="tbrand-icon">🏥</div>
+      <div class="tbrand-icon"><img src="assets/logo.png" alt="BettenNetz Logo"></div>
       <div class="tbrand-name">Betten<em>Netz</em></div>
     </div>
     <div class="tdiv"></div>
