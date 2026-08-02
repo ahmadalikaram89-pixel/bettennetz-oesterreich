@@ -1762,8 +1762,14 @@ function renderTrendChart(){
     hoverG.style.display='block';
     tooltip.innerHTML=`<div class="tt-date">${d.date.toLocaleDateString('de-AT',{weekday:'short',day:'2-digit',month:'2-digit'})}</div><div class="tt-val">${d.pct}% Auslastung</div>`;
     tooltip.style.display='block';
-    const leftPct=(px/W)*100;
-    tooltip.style.left=`clamp(40px, ${leftPct}%, calc(100% - 40px))`;
+    // Position in real pixels (not a CSS clamp on the anchor point alone) —
+    // the tooltip is centered via translateX(-50%), so clamping only the
+    // anchor still let it overflow the card by half its own width near
+    // either edge. Measure the actual rendered width and clamp that.
+    const wrapWidthPx=wrap.getBoundingClientRect().width;
+    const ttHalf=tooltip.offsetWidth/2;
+    const leftPx=(px/W)*wrapWidthPx;
+    tooltip.style.left=Math.max(ttHalf,Math.min(wrapWidthPx-ttHalf,leftPx))+'px';
   }
   hitArea.addEventListener('pointermove',e=>moveTo(e.clientX));
   hitArea.addEventListener('pointerleave',()=>{hoverG.style.display='none';tooltip.style.display='none';});
