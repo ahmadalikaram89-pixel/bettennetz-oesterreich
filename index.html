@@ -6,10 +6,20 @@
 <title>BettenNetz Österreich · OP-Kapazitätsvermittlung</title>
 <link rel="icon" type="image/png" href="assets/logo.png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
+/* Self-hosted fonts (was Google Fonts) — avoids sending visitor IPs to
+   Google on every page load, a known GDPR issue with the googleapis.com
+   CDN. */
+@font-face{font-family:'DM Sans';font-style:normal;font-weight:400;font-display:swap;src:url('assets/fonts/dm-sans-latin-400-normal.woff2') format('woff2');}
+@font-face{font-family:'DM Sans';font-style:normal;font-weight:500;font-display:swap;src:url('assets/fonts/dm-sans-latin-500-normal.woff2') format('woff2');}
+@font-face{font-family:'DM Sans';font-style:normal;font-weight:600;font-display:swap;src:url('assets/fonts/dm-sans-latin-600-normal.woff2') format('woff2');}
+@font-face{font-family:'DM Sans';font-style:normal;font-weight:700;font-display:swap;src:url('assets/fonts/dm-sans-latin-700-normal.woff2') format('woff2');}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url('assets/fonts/inter-latin-400-normal.woff2') format('woff2');}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url('assets/fonts/inter-latin-500-normal.woff2') format('woff2');}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url('assets/fonts/inter-latin-600-normal.woff2') format('woff2');}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400;font-display:swap;src:url('assets/fonts/jetbrains-mono-latin-400-normal.woff2') format('woff2');}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:500;font-display:swap;src:url('assets/fonts/jetbrains-mono-latin-500-normal.woff2') format('woff2');}
 :root {
   --bg:        #F0F4F8;
   --surface:   #FFFFFF;
@@ -582,7 +592,7 @@ input,select{font-family:inherit;}
 
     <div class="legal-section">
       <div class="legal-label">Hosting &amp; eingesetzte Dienste</div>
-      <p>Diese Anwendung wird über Vercel und/oder GitHub Pages ausgeliefert. Für Anmeldung, Datenspeicherung und Echtzeit-Synchronisation wird Supabase eingesetzt, sobald angebunden. Schriftarten werden derzeit von Google Fonts nachgeladen, wodurch die IP-Adresse an Google übertragen wird. Mit allen genannten Anbietern werden, soweit erforderlich, Auftragsverarbeitungsverträge abgeschlossen bzw. deren Standardvertragsklauseln herangezogen.</p>
+      <p>Diese Anwendung wird über Vercel und/oder GitHub Pages ausgeliefert. Für Anmeldung, Datenspeicherung und Echtzeit-Synchronisation wird Supabase eingesetzt, sobald angebunden. Schriftarten werden lokal von unserem eigenen Server ausgeliefert, es erfolgt keine Verbindung zu Google Fonts oder anderen externen Schriftart-Diensten. Mit allen genannten Anbietern werden, soweit erforderlich, Auftragsverarbeitungsverträge abgeschlossen bzw. deren Standardvertragsklauseln herangezogen.</p>
     </div>
 
     <div class="legal-section">
