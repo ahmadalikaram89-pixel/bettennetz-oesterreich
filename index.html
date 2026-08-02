@@ -449,6 +449,19 @@ input,select{font-family:inherit;}
   .land-nav{padding:16px 20px;}
   .land-footer{flex-direction:column;gap:10px;align-items:flex-start;}
 }
+
+/* ===== PRINT (PDF export via window.print()) ===== */
+@media print{
+  html,body{height:auto!important;overflow:visible!important;}
+  #landingScreen,#loginScreen,.topbar,.dash-sidebar,.mode-switcher,.no-print{display:none!important;}
+  #app{display:block!important;height:auto!important;}
+  #view-map{display:none!important;}
+  #view-dash{display:block!important;height:auto!important;}
+  .dash-main,.pbody,.tscroll{overflow:visible!important;height:auto!important;}
+  .panel{display:none!important;}
+  .panel.on{display:block!important;}
+  .sc,.trend-svg-wrap{box-shadow:none!important;break-inside:avoid;}
+}
 </style>
 </head>
 <body>
@@ -728,14 +741,14 @@ input,select{font-family:inherit;}
         <div class="pheader"><div><div class="ptitle">Eingehende OP-Anfragen</div><div class="psub">Anonyme Anfragen · Keine Patientendaten gespeichert</div></div></div>
         <div class="pbody">
           <div class="sc">
-            <div class="sch"><div class="sctitle">Eingehend</div><div class="scmeta">An uns gerichtet</div></div>
+            <div class="sch"><div><div class="sctitle">Eingehend</div><div class="scmeta">An uns gerichtet</div></div><button class="btn-secondary no-print" style="font-size:11px;padding:5px 11px;" onclick="exportTransfersCSV('incoming')">⬇ CSV</button></div>
             <div class="tscroll"><table class="dtable">
               <thead><tr><th>Anfrage-ID</th><th>Von Krankenhaus</th><th>OP-Fachbereich</th><th>Priorität</th><th>Eingang</th><th>Status</th><th>Aktion</th></tr></thead>
               <tbody id="tbody"></tbody>
             </table></div>
           </div>
           <div class="sc mt13">
-            <div class="sch"><div class="sctitle">Gesendet</div><div class="scmeta">Von uns angefragt · Code fürs Patient-Handover bei Annahme</div></div>
+            <div class="sch"><div><div class="sctitle">Gesendet</div><div class="scmeta">Von uns angefragt · Code fürs Patient-Handover bei Annahme</div></div><button class="btn-secondary no-print" style="font-size:11px;padding:5px 11px;" onclick="exportTransfersCSV('sent')">⬇ CSV</button></div>
             <div class="tscroll"><table class="dtable">
               <thead><tr><th>Anfrage-ID</th><th>An Krankenhaus</th><th>OP-Fachbereich</th><th>Priorität</th><th>Eingang</th><th>Status</th><th>Code für Patient</th></tr></thead>
               <tbody id="tbodySent"></tbody>
@@ -758,12 +771,18 @@ input,select{font-family:inherit;}
 
       <!-- BERICHTE -->
       <div class="panel" id="p-reports">
-        <div class="pheader"><div><div class="ptitle">Berichte & Trends</div><div class="psub">OP-Auslastung über Zeit</div></div></div>
+        <div class="pheader">
+          <div><div class="ptitle">Berichte & Trends</div><div class="psub">OP-Auslastung über Zeit</div></div>
+          <button class="btn-secondary no-print" onclick="window.print()">⬇ Als PDF exportieren</button>
+        </div>
         <div class="pbody">
           <div class="sc">
             <div class="sch">
               <div class="sctitle">Auslastung — letzte 14 Tage</div>
-              <button class="btn-secondary" id="trendToggleBtn" onclick="toggleTrendTable()" style="font-size:11px;padding:5px 11px;">Als Tabelle anzeigen</button>
+              <div style="display:flex;gap:8px;">
+                <button class="btn-secondary no-print" style="font-size:11px;padding:5px 11px;" onclick="exportTrendCSV()">⬇ CSV</button>
+                <button class="btn-secondary no-print" id="trendToggleBtn" onclick="toggleTrendTable()" style="font-size:11px;padding:5px 11px;">Als Tabelle anzeigen</button>
+              </div>
             </div>
             <div class="trend-body">
               <div class="trend-svg-wrap" id="trendChartWrap"></div>
@@ -784,7 +803,13 @@ input,select{font-family:inherit;}
 
       <!-- GÖG -->
       <div class="panel" id="p-goeg">
-        <div class="pheader"><div><div class="ptitle">GÖG · OP-Auslastung Österreich</div><div class="psub">Nur GÖG-intern · Keine absoluten Zahlen gespeichert</div></div></div>
+        <div class="pheader">
+          <div><div class="ptitle">GÖG · OP-Auslastung Österreich</div><div class="psub">Nur GÖG-intern · Keine absoluten Zahlen gespeichert</div></div>
+          <div style="display:flex;gap:8px;" class="no-print">
+            <button class="btn-secondary" onclick="exportGoegCSV()">⬇ CSV</button>
+            <button class="btn-secondary" onclick="window.print()">⬇ Als PDF exportieren</button>
+          </div>
+        </div>
         <div class="pbody">
           <div class="sc">
             <div class="tscroll"><table class="dtable">
@@ -1634,6 +1659,51 @@ function toggleTrendTable(){
     tableEl.style.display='block'; chartEl.style.display='none';
     btn.textContent='Als Diagramm anzeigen';
   }
+}
+
+/* ============================================================
+   EXPORT (CSV / PDF)
+============================================================ */
+// Semicolon-delimited + UTF-8 BOM: matches the Austrian/German Excel
+// locale (comma is the decimal separator there, so Excel expects ';').
+function downloadCSV(filename,rows){
+  const esc=s=>{
+    const v=String(s??'');
+    return /[",;\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v;
+  };
+  const csv=rows.map(r=>r.map(esc).join(';')).join('\r\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportTrendCSV(){
+  const data=window._trendData||genTrendData();
+  const rows=[['Tag','Auslastung (%)'],...data.map(d=>[d.date.toLocaleDateString('de-AT'),d.pct])];
+  const who=(CU?.hospital||'bettennetz').replace(/[^a-z0-9]+/gi,'_');
+  downloadCSV(`auslastung-${who}.csv`,rows);
+}
+
+function exportTransfersCSV(kind){
+  const incoming=kind==='incoming';
+  const list=TRANSFERS.filter(t=>incoming?t.to===CU.hospital:t.from===CU.hospital);
+  const rows=[
+    ['Anfrage-ID',incoming?'Von Krankenhaus':'An Krankenhaus','OP-Fachbereich','Priorität','Eingang','Status'],
+    ...list.map(t=>[t.tid,incoming?t.from:t.to,t.fach,t.prio,t.time,t.status])
+  ];
+  const who=(CU?.hospital||'bettennetz').replace(/[^a-z0-9]+/gi,'_');
+  downloadCSV(`anfragen-${incoming?'eingehend':'gesendet'}-${who}.csv`,rows);
+}
+
+function exportGoegCSV(){
+  const rows=[
+    ['Krankenhaus','Bundesland','Allgemein %','Herzchirurgie %','Neurochirurgie %','Orthopädie %','Stand'],
+    ...GD.map(h=>[h.n,h.bl,h.gP,h.hP,h.nP,h.oP,h.t])
+  ];
+  downloadCSV('goeg-op-auslastung-oesterreich.csv',rows);
 }
 
 /* ============================================================
