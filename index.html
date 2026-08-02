@@ -1033,6 +1033,11 @@ function renderPins(){
     g2.classList.add('hpin');
     g2.setAttribute('transform',`translate(${h.lng},${h.lat})`);
     g2.onclick=()=>selectHospital(h);
+    // native SVG tooltip: several hospitals share the same first letter
+    // (the pin's label), so hovering needs to disambiguate which is which.
+    const title=document.createElementNS('http://www.w3.org/2000/svg','title');
+    title.textContent=`${h.n} — ${h.city} · ${h.bl}`;
+    g2.appendChild(title);
     // pulse for available
     if(s==='g'){
       const pulse=document.createElementNS('http://www.w3.org/2000/svg','circle');
