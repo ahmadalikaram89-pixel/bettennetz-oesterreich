@@ -450,6 +450,22 @@ input,select{font-family:inherit;}
   .land-footer{flex-direction:column;gap:10px;align-items:flex-start;}
 }
 
+/* ===== LEGAL (Impressum / Datenschutz) ===== */
+.legal-screen{display:none;position:fixed;inset:0;z-index:950;overflow-y:auto;background:var(--bg);}
+.legal-wrap{max-width:680px;margin:0 auto;padding:48px 32px 80px;}
+.legal-back{background:none;border:none;color:var(--t3);font-size:12px;margin-bottom:24px;cursor:pointer;padding:0;}
+.legal-back:hover{color:var(--accent);}
+.legal-h1{font-family:'DM Sans',sans-serif;font-size:26px;font-weight:700;margin-bottom:4px;}
+.legal-sub{font-size:12.5px;color:var(--t3);margin-bottom:32px;}
+.legal-section{margin-bottom:26px;}
+.legal-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;}
+.legal-section p{font-size:13.5px;color:var(--t2);line-height:1.75;margin-bottom:10px;}
+.legal-section p:last-child{margin-bottom:0;}
+.legal-section a{color:var(--accent);}
+@media (max-width:760px){
+  .legal-wrap{padding:32px 20px 60px;}
+}
+
 /* ===== PRINT (PDF export via window.print()) ===== */
 @media print{
   html,body{height:auto!important;overflow:visible!important;}
@@ -508,8 +524,81 @@ input,select{font-family:inherit;}
   </div>
 
   <div class="land-footer">
-    <div>© 2026 BettenNetz Österreich</div>
-    <div class="land-footer-links" id="landFooterLinks"></div>
+    <div>© 2026 BettenNetz Österreich · ein Produkt von SmartOrdi OG</div>
+    <div class="land-footer-links">
+      <a href="#" onclick="showLegal('impressum');return false;">Impressum</a>
+      <a href="#" onclick="showLegal('datenschutz');return false;">Datenschutz</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== IMPRESSUM ===== -->
+<div id="impressumScreen" class="legal-screen">
+  <div class="legal-wrap">
+    <button onclick="showLanding()" class="legal-back">← Zur Startseite</button>
+    <div class="legal-h1">Impressum</div>
+    <div class="legal-sub">Angaben gemäß § 5 E-Commerce-Gesetz (ECG)</div>
+
+    <div class="legal-section">
+      <div class="legal-label">Medieninhaber &amp; Betreiber</div>
+      <p>SmartOrdi OG<br>Steingasse A6<br>4020 Linz, Österreich</p>
+    </div>
+
+    <div class="legal-section">
+      <div class="legal-label">Kontakt</div>
+      <p>E-Mail: <a href="mailto:team@smartordi.eu">team@smartordi.eu</a></p>
+    </div>
+
+    <div class="legal-section">
+      <div class="legal-label">Rechtsform</div>
+      <p>Offene Gesellschaft (OG)</p>
+    </div>
+
+    <div class="legal-section">
+      <div class="legal-label">Unternehmensgegenstand</div>
+      <p>Entwicklung von Softwarelösungen im Gesundheitsbereich.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DATENSCHUTZ ===== -->
+<div id="datenschutzScreen" class="legal-screen">
+  <div class="legal-wrap">
+    <button onclick="showLanding()" class="legal-back">← Zur Startseite</button>
+    <div class="legal-h1">Datenschutzerklärung</div>
+    <div class="legal-sub">Stand: August 2026</div>
+
+    <div class="legal-section">
+      <div class="legal-label">Verantwortlicher</div>
+      <p>SmartOrdi OG, Steingasse A6, 4020 Linz, Österreich<br>E-Mail: <a href="mailto:team@smartordi.eu">team@smartordi.eu</a></p>
+    </div>
+
+    <div class="legal-section">
+      <div class="legal-label">Welche Daten wir verarbeiten</div>
+      <p><strong>Zugangsdaten:</strong> Benutzername/E-Mail und Passwort der Krankenhaus-Mitarbeitenden, zur Anmeldung am System.</p>
+      <p><strong>Betriebliche Daten:</strong> von Krankenhäusern selbst eingetragene OP-Kapazitäten und Fachrichtungen.</p>
+      <p><strong>Transferanfragen:</strong> Fachbereich und Priorität einer Anfrage zwischen zwei Krankenhäusern. <strong>Es werden zu keinem Zeitpunkt Patientendaten übertragen oder gespeichert</strong> — Anfragen enthalten ausschließlich Fachbereich, Priorität und die beteiligten Krankenhäuser.</p>
+    </div>
+
+    <div class="legal-section">
+      <div class="legal-label">Hosting &amp; eingesetzte Dienste</div>
+      <p>Diese Anwendung wird über Vercel und/oder GitHub Pages ausgeliefert. Für Anmeldung, Datenspeicherung und Echtzeit-Synchronisation wird Supabase eingesetzt, sobald angebunden. Schriftarten werden derzeit von Google Fonts nachgeladen, wodurch die IP-Adresse an Google übertragen wird. Mit allen genannten Anbietern werden, soweit erforderlich, Auftragsverarbeitungsverträge abgeschlossen bzw. deren Standardvertragsklauseln herangezogen.</p>
+    </div>
+
+    <div class="legal-section">
+      <div class="legal-label">Cookies</div>
+      <p>Diese Website verwendet keine Cookies zu Analyse- oder Marketingzwecken.</p>
+    </div>
+
+    <div class="legal-section">
+      <div class="legal-label">Ihre Rechte</div>
+      <p>Sie haben das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung Ihrer Daten sowie auf Datenübertragbarkeit. Anfragen richten Sie bitte an <a href="mailto:team@smartordi.eu">team@smartordi.eu</a>. Zudem besteht ein Beschwerderecht bei der österreichischen Datenschutzbehörde (Barichgasse 40–42, 1030 Wien).</p>
+    </div>
+
+    <div class="legal-section">
+      <div class="legal-label">Änderungen</div>
+      <p>Diese Datenschutzerklärung wird angepasst, sobald sich die tatsächlich eingesetzten Dienste oder verarbeiteten Daten ändern — etwa nach Anbindung von Supabase.</p>
+    </div>
   </div>
 </div>
 
@@ -1044,7 +1133,14 @@ function showLogin(){
 }
 function showLanding(){
   document.getElementById('loginScreen').style.display='none';
+  document.getElementById('impressumScreen').style.display='none';
+  document.getElementById('datenschutzScreen').style.display='none';
   document.getElementById('landingScreen').style.display='block';
+}
+function showLegal(which){
+  document.getElementById('landingScreen').style.display='none';
+  document.getElementById(which==='impressum'?'impressumScreen':'datenschutzScreen').style.display='block';
+  window.scrollTo(0,0);
 }
 function fill(u,p){document.getElementById('lu').value=u;document.getElementById('lp').value=p;}
 
