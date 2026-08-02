@@ -753,7 +753,7 @@ input,select{font-family:inherit;}
   <div class="view" id="view-dash">
     <nav class="dash-sidebar">
       <div class="nslabel" style="margin-bottom:5px;">Navigation</div>
-      <button class="nitem on" onclick="showPanel('overview',this)"><span class="nico">◈</span>Übersicht</button>
+      <button class="nitem on" onclick="showPanel('overview',this)" id="novw"><span class="nico">◈</span>Übersicht</button>
       <button class="nitem" onclick="showPanel('op',this)" id="nop"><span class="nico">⊞</span>OP-Kapazität</button>
       <button class="nitem" onclick="showPanel('transfers',this)"><span class="nico">⇄</span>OP-Anfragen<span class="nbadge" id="tbadge">—</span></button>
       <button class="nitem" onclick="showPanel('fach',this)"><span class="nico">✦</span>Fachrichtungen</button>
@@ -1215,6 +1215,25 @@ async function logout(){
    INIT
 ============================================================ */
 function initApp(){
+  // Reset role-gated / navigational UI first — a previous login in this
+  // same tab may have been a different role (e.g. GÖG) and left its nav
+  // item, its data, or a non-default panel/view showing.
+  document.querySelector('.ngoeg').style.display='none';
+  document.getElementById('gbody').innerHTML='';
+  const nc=document.getElementById('nop');
+  nc.style.opacity=''; nc.style.pointerEvents='';
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.getElementById('p-overview').classList.add('on');
+  document.querySelectorAll('.dash-sidebar .nitem').forEach(b=>b.classList.remove('on'));
+  document.getElementById('novw').classList.add('on');
+  switchView('map');
+  closeDetail();
+  currentFilter='all';
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('on'));
+  document.querySelector('.fbtn')?.classList.add('on');
+  const si=document.getElementById('searchInput'); if(si) si.value='';
+  toggleSearchClear();
+
   set('thosp',CU.hospital); set('tbl',CU.bl);
   const rc=document.getElementById('rchip');
   rc.textContent=RLABEL[CU.role]; rc.className='rchip '+CU.role;
@@ -1227,7 +1246,6 @@ function initApp(){
     renderGoeg();
   }
   if(CU.role==='staff'){
-    const nc=document.getElementById('nop');
     nc.style.opacity='.4'; nc.style.pointerEvents='none';
   }
 
