@@ -94,6 +94,39 @@ grant update (status) on transfers to authenticated;
 alter publication supabase_realtime add table transfers;
 
 -- ---------------------------------------------------------------------------
+-- capacity_history — one snapshot per hospital per save(), powering the
+-- "Berichte" trend chart with real data instead of the client-side demo
+-- numbers. Not wired up in index.html yet — save() would need to insert a
+-- row here (overall utilization %, or per-category if the chart is later
+-- broken out by Fachbereich) each time a hospital publishes.
+-- ---------------------------------------------------------------------------
+create table if not exists capacity_history (
+  id uuid primary key default gen_random_uuid(),
+  hospital text not null check (char_length(hospital) between 1 and 120),
+  pct integer not null check (pct between 0 and 100),
+  recorded_at timestamptz not null default now()
+);
+
+alter table capacity_history enable row level security;
+
+create index if not exists capacity_history_hospital_idx
+  on capacity_history (hospital, recorded_at desc);
+
+-- A hospital may insert/read only its own history; GÖG reads everyone's.
+create policy "capacity_history_select_own_or_goeg" on capacity_history
+  for select to authenticated
+  using (
+    hospital = (select hospital from hospital_profiles where user_id = auth.uid())
+    or exists (select 1 from hospital_profiles p where p.user_id = auth.uid() and p.role = 'goeg')
+  );
+
+create policy "capacity_history_insert_own" on capacity_history
+  for insert to authenticated
+  with check (
+    hospital = (select hospital from hospital_profiles where user_id = auth.uid())
+  );
+
+-- ---------------------------------------------------------------------------
 -- Seed demo transfer rows (no real patient data, safe to keep).
 -- ---------------------------------------------------------------------------
 insert into transfers (tid, from_hospital, to_hospital, fach, prio, status, created_at)

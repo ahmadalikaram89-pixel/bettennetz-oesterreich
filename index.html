@@ -22,6 +22,7 @@
   --accent-g:  rgba(30,122,108,0.06);
   --info:      #5C84A0;
   --info-d:    rgba(92,132,160,0.12);
+  --chart-line: #12967D;
   --green:     #0D9668;
   --green-d:   rgba(13,150,104,0.12);
   --amber:     #D97706;
@@ -346,6 +347,16 @@ input,select{font-family:inherit;}
 .gbfill{height:100%;border-radius:2px;}
 .gpct{font-family:'JetBrains Mono',monospace;font-size:11px;width:28px;}
 
+/* TREND CHART */
+.trend-body{padding:15px 17px;}
+.trend-svg-wrap{position:relative;}
+.trend-svg{width:100%;height:auto;display:block;}
+#trendHitArea{cursor:crosshair;}
+.trend-tooltip{display:none;position:absolute;top:6px;transform:translateX(-50%);background:var(--t1);color:#fff;border-radius:6px;padding:6px 10px;font-size:11px;line-height:1.5;pointer-events:none;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.2);z-index:5;}
+.trend-tooltip .tt-date{color:rgba(255,255,255,.65);font-size:10px;}
+.trend-tooltip .tt-val{font-weight:700;font-family:'JetBrains Mono',monospace;}
+.trend-note{padding:0 17px 15px;font-size:11px;color:var(--t3);}
+
 .empty{text-align:center;padding:44px 20px;}
 .eico{font-size:26px;opacity:.25;margin-bottom:9px;}
 .etxt{font-size:13px;color:var(--t3);}
@@ -407,13 +418,92 @@ input,select{font-family:inherit;}
   .srow{grid-template-columns:1fr;}
   .grid2{grid-template-columns:1fr;}
 }
+/* ===== LANDING ===== */
+#landingScreen{position:fixed;inset:0;z-index:900;overflow-y:auto;background:var(--bg);background-image:radial-gradient(ellipse 55% 50% at 20% 10%,rgba(30,122,108,0.07) 0%,transparent 100%),radial-gradient(ellipse 40% 40% at 80% 30%,rgba(92,132,160,0.06) 0%,transparent 100%);}
+.land-nav{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;max-width:1040px;margin:0 auto;}
+.land-cta-small{padding:8px 16px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;transition:background .15s;}
+.land-cta-small:hover{background:#23947F;}
+.land-hero{max-width:760px;margin:0 auto;padding:56px 32px 40px;text-align:center;}
+.land-h1{font-family:'DM Sans',sans-serif;font-size:34px;font-weight:700;letter-spacing:-0.6px;line-height:1.25;margin-bottom:16px;}
+.land-h1 em{color:var(--accent);font-style:normal;}
+.land-sub{font-size:15px;color:var(--t2);line-height:1.7;max-width:560px;margin:0 auto 28px;}
+.land-cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+.land-cta-primary{padding:12px 26px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;transition:background .15s;box-shadow:0 4px 14px rgba(30,122,108,0.25);}
+.land-cta-primary:hover{background:#23947F;}
+.land-cta-secondary{padding:12px 26px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--t1);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;transition:all .15s;}
+.land-cta-secondary:hover{border-color:var(--accent);color:var(--accent);}
+.land-problem{max-width:720px;margin:0 auto;padding:0 32px 48px;text-align:center;}
+.land-problem p{font-size:14px;color:var(--t2);line-height:1.8;}
+.land-features{max-width:1040px;margin:0 auto;padding:0 32px 56px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.land-fcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 20px;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
+.land-ficon{width:38px;height:38px;border-radius:9px;background:var(--accent-d);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:14px;}
+.land-ftitle{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;margin-bottom:6px;}
+.land-fdesc{font-size:12.5px;color:var(--t2);line-height:1.6;}
+.land-footer{max-width:1040px;margin:0 auto;padding:24px 32px 40px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border-s);font-size:12px;color:var(--t3);}
+.land-footer-links{display:flex;gap:16px;}
+.land-footer-links a{color:var(--t3);text-decoration:none;}
+.land-footer-links a:hover{color:var(--accent);}
+@media (max-width:760px){
+  .land-features{grid-template-columns:1fr;}
+  .land-h1{font-size:26px;}
+  .land-nav{padding:16px 20px;}
+  .land-footer{flex-direction:column;gap:10px;align-items:flex-start;}
+}
 </style>
 </head>
 <body>
 
+<!-- ===== LANDING ===== -->
+<div id="landingScreen">
+  <div class="land-nav">
+    <div class="lmark" style="margin-bottom:0;">
+      <div class="lmark-icon"><img src="assets/logo.png" alt="BettenNetz Logo"></div>
+      <div class="lmark-name">Betten<em>Netz</em> Österreich</div>
+    </div>
+    <button class="land-cta-small" onclick="showLogin()">Anmelden</button>
+  </div>
+
+  <div class="land-hero">
+    <div class="land-h1">Freie OP-Kapazität in Echtzeit sichtbar — für <em>ganz Österreich</em></div>
+    <div class="land-sub">BettenNetz vernetzt österreichische Krankenhäuser: freie OP-Kapazität live sehen und Anfragen direkt stellen — ohne Patientendaten, nur Fachbereich und Priorität.</div>
+    <div class="land-cta-row">
+      <button class="land-cta-primary" onclick="showLogin()">Zur Anmeldung →</button>
+      <button class="land-cta-secondary" onclick="showLogin()">Demo ansehen</button>
+    </div>
+  </div>
+
+  <div class="land-problem">
+    <p>Heute laufen Abstimmungen über freie OP-Kapazität meist über Telefonate zwischen Stationen — zeitaufwendig, gerade im Dringlichkeits- oder Notfall. BettenNetz macht freie Kapazität sofort sichtbar und Anfragen in Sekunden möglich.</p>
+  </div>
+
+  <div class="land-features">
+    <div class="land-fcard">
+      <div class="land-ficon">🗺</div>
+      <div class="land-ftitle">Karte in Echtzeit</div>
+      <div class="land-fdesc">Alle teilnehmenden Krankenhäuser auf einen Blick, mit Status je Fachbereich — verfügbar, begrenzt oder voll.</div>
+    </div>
+    <div class="land-fcard">
+      <div class="land-ficon">⇄</div>
+      <div class="land-ftitle">Anfragen ohne Patientendaten</div>
+      <div class="land-fdesc">Nur Fachbereich und Priorität werden übertragen. Die Bestätigung erfolgt durch direkten Kontakt zwischen den Kliniken.</div>
+    </div>
+    <div class="land-fcard">
+      <div class="land-ficon">⊛</div>
+      <div class="land-ftitle">Nationale Übersicht für GÖG</div>
+      <div class="land-fdesc">Gesundheit Österreich erhält eine aggregierte Auslastungsübersicht über alle teilnehmenden Häuser — ohne absolute Zahlen.</div>
+    </div>
+  </div>
+
+  <div class="land-footer">
+    <div>© 2026 BettenNetz Österreich</div>
+    <div class="land-footer-links" id="landFooterLinks"></div>
+  </div>
+</div>
+
 <!-- ===== LOGIN ===== -->
-<div id="loginScreen">
+<div id="loginScreen" style="display:none;">
   <div class="lw">
+    <button onclick="showLanding()" style="background:none;border:none;color:var(--t3);font-size:12px;margin-bottom:14px;cursor:pointer;padding:0;">← Zur Startseite</button>
     <div class="lmark">
       <div class="lmark-icon"><img src="assets/logo.png" alt="BettenNetz Logo"></div>
       <div class="lmark-name">Betten<em>Netz</em> Österreich</div>
@@ -555,6 +645,7 @@ input,select{font-family:inherit;}
       <button class="nitem" onclick="showPanel('op',this)" id="nop"><span class="nico">⊞</span>OP-Kapazität</button>
       <button class="nitem" onclick="showPanel('transfers',this)"><span class="nico">⇄</span>OP-Anfragen<span class="nbadge" id="tbadge">—</span></button>
       <button class="nitem" onclick="showPanel('fach',this)"><span class="nico">✦</span>Fachrichtungen</button>
+      <button class="nitem" onclick="showPanel('reports',this)"><span class="nico">▲</span>Berichte</button>
       <div class="ndiv"></div>
       <div class="nslabel">System</div>
       <button class="nitem" onclick="showPanel('history',this)"><span class="nico">◷</span>Verlauf</button>
@@ -661,6 +752,26 @@ input,select{font-family:inherit;}
             <div class="sch"><div class="sctitle">Verfügbare Fachrichtungen</div><div class="scmeta" id="fcount">0 aktiv</div></div>
             <div class="fgrid" id="fgrid"></div>
             <div class="savebar"><div class="sbleft"><div class="sbtime">Änderungen sofort sichtbar</div><div class="toast" id="toastFach">✓ Gespeichert</div></div><button class="btn-save" onclick="saveFach()">Speichern</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BERICHTE -->
+      <div class="panel" id="p-reports">
+        <div class="pheader"><div><div class="ptitle">Berichte & Trends</div><div class="psub">OP-Auslastung über Zeit</div></div></div>
+        <div class="pbody">
+          <div class="sc">
+            <div class="sch">
+              <div class="sctitle">Auslastung — letzte 14 Tage</div>
+              <button class="btn-secondary" id="trendToggleBtn" onclick="toggleTrendTable()" style="font-size:11px;padding:5px 11px;">Als Tabelle anzeigen</button>
+            </div>
+            <div class="trend-body">
+              <div class="trend-svg-wrap" id="trendChartWrap"></div>
+              <div class="trend-table-wrap" id="trendTableWrap" style="display:none;">
+                <table class="dtable"><thead><tr><th>Tag</th><th>Auslastung</th></tr></thead><tbody id="trendTableBody"></tbody></table>
+              </div>
+            </div>
+            <div class="trend-note">ⓘ Demo-Daten zur Veranschaulichung — echte Verlaufsdaten folgen nach Supabase-Anbindung.</div>
           </div>
         </div>
       </div>
@@ -902,6 +1013,14 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 /* ============================================================
    LOGIN
 ============================================================ */
+function showLogin(){
+  document.getElementById('landingScreen').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+}
+function showLanding(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('landingScreen').style.display='block';
+}
 function fill(u,p){document.getElementById('lu').value=u;document.getElementById('lp').value=p;}
 
 function showLoginError(msg){
@@ -981,7 +1100,7 @@ function initApp(){
     nc.style.opacity='.4'; nc.style.pointerEvents='none';
   }
 
-  renderPins(); renderList(); renderFach(); renderHist();
+  renderPins(); renderList(); renderFach(); renderHist(); renderTrendChart();
   renderOpTable(); renderAddCatSelect();
   recalc(); updateMapStats(); tick();
   loadTransfers(); subscribeTransfers();
@@ -1415,6 +1534,106 @@ async function act(id,s){
   // Confirmed acceptance = a real reservation: hold the bed now to avoid double-booking.
   if(s==='accepted'&&t) reserveCapacity(t.fach);
   renderTR(); renderSent(); updateBadge(); recalc();
+}
+
+/* ============================================================
+   TRENDS
+============================================================ */
+// Demo-only: illustrative utilization trend, not a real history yet.
+// Once Supabase is connected, a capacity_history table (one row per
+// save()) would replace this with the hospital's real last-14-days data.
+const TREND_BASE = [52,55,58,54,61,64,60,63,68,65,70,67,64,69];
+
+function genTrendData(){
+  const today=new Date();
+  return TREND_BASE.map((pct,idx)=>{
+    const d=new Date(today);
+    d.setDate(d.getDate()-(TREND_BASE.length-1-idx));
+    return {date:d, pct};
+  });
+}
+
+function renderTrendChart(){
+  const wrap=document.getElementById('trendChartWrap');
+  if(!wrap) return;
+  const data=genTrendData();
+  window._trendData=data;
+  const W=640,H=200,padL=34,padR=14,padT=16,padB=28;
+  const innerW=W-padL-padR, innerH=H-padT-padB;
+  const xPos=i=>padL+(innerW*(i/(data.length-1)));
+  const yPos=v=>padT+innerH-(innerH*(v/100));
+
+  const pathD=data.map((d,i)=>`${i===0?'M':'L'}${xPos(i).toFixed(1)},${yPos(d.pct).toFixed(1)}`).join(' ');
+
+  const gridLines=[0,25,50,75,100].map(v=>`
+    <line x1="${padL}" y1="${yPos(v)}" x2="${W-padR}" y2="${yPos(v)}" stroke="var(--border-s)" stroke-width="1"/>
+    <text x="${padL-8}" y="${yPos(v)+3}" text-anchor="end" font-size="9" fill="var(--t3)" font-family="'JetBrains Mono',monospace">${v}%</text>`).join('');
+
+  const dayLabels=data.map((d,i)=>{
+    if(i%2!==0 && i!==data.length-1) return '';
+    return `<text x="${xPos(i)}" y="${H-8}" text-anchor="middle" font-size="9" fill="var(--t3)" font-family="'Inter',sans-serif">${d.date.toLocaleDateString('de-AT',{day:'2-digit',month:'2-digit'})}</text>`;
+  }).join('');
+
+  const thresholdY=yPos(85);
+  const last=data[data.length-1];
+
+  wrap.innerHTML=`<svg viewBox="0 0 ${W} ${H}" class="trend-svg" id="trendSvg">
+      ${gridLines}
+      <line x1="${padL}" y1="${thresholdY}" x2="${W-padR}" y2="${thresholdY}" stroke="var(--red)" stroke-width="1" stroke-dasharray="3,3" opacity="0.55"/>
+      <text x="${W-padR}" y="${thresholdY-4}" text-anchor="end" font-size="9" fill="var(--red)" font-family="'Inter',sans-serif">Voll-Schwelle 85%</text>
+      <path d="${pathD}" fill="none" stroke="var(--chart-line)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${xPos(data.length-1)}" cy="${yPos(last.pct)}" r="4" fill="var(--chart-line)" stroke="var(--surface)" stroke-width="2"/>
+      <text x="${xPos(data.length-1)-6}" y="${yPos(last.pct)-10}" text-anchor="end" font-size="10" font-weight="700" fill="var(--t1)" font-family="'DM Sans',sans-serif">${last.pct}%</text>
+      ${dayLabels}
+      <g id="trendHover" style="display:none">
+        <line id="trendCrosshair" y1="${padT}" y2="${H-padB}" stroke="var(--t3)" stroke-width="1" stroke-dasharray="2,2"/>
+        <circle id="trendHoverDot" r="4" fill="var(--chart-line)" stroke="var(--surface)" stroke-width="2"/>
+      </g>
+      <rect id="trendHitArea" x="${padL}" y="${padT}" width="${innerW}" height="${innerH}" fill="transparent"/>
+    </svg>
+    <div class="trend-tooltip" id="trendTooltip"></div>`;
+
+  const svg=document.getElementById('trendSvg');
+  const hitArea=document.getElementById('trendHitArea');
+  const hoverG=document.getElementById('trendHover');
+  const crosshair=document.getElementById('trendCrosshair');
+  const hoverDot=document.getElementById('trendHoverDot');
+  const tooltip=document.getElementById('trendTooltip');
+
+  function moveTo(clientX){
+    const rect=svg.getBoundingClientRect();
+    const scaleX=W/rect.width;
+    const mx=(clientX-rect.left)*scaleX;
+    let idx=Math.round(((mx-padL)/innerW)*(data.length-1));
+    idx=Math.max(0,Math.min(data.length-1,idx));
+    const d=data[idx];
+    const px=xPos(idx),py=yPos(d.pct);
+    crosshair.setAttribute('x1',px);crosshair.setAttribute('x2',px);
+    hoverDot.setAttribute('cx',px);hoverDot.setAttribute('cy',py);
+    hoverG.style.display='block';
+    tooltip.innerHTML=`<div class="tt-date">${d.date.toLocaleDateString('de-AT',{weekday:'short',day:'2-digit',month:'2-digit'})}</div><div class="tt-val">${d.pct}% Auslastung</div>`;
+    tooltip.style.display='block';
+    const leftPct=(px/W)*100;
+    tooltip.style.left=`clamp(40px, ${leftPct}%, calc(100% - 40px))`;
+  }
+  hitArea.addEventListener('pointermove',e=>moveTo(e.clientX));
+  hitArea.addEventListener('pointerleave',()=>{hoverG.style.display='none';tooltip.style.display='none';});
+}
+
+function toggleTrendTable(){
+  const chartEl=document.getElementById('trendChartWrap');
+  const tableEl=document.getElementById('trendTableWrap');
+  const btn=document.getElementById('trendToggleBtn');
+  const showingTable=tableEl.style.display!=='none';
+  if(showingTable){
+    tableEl.style.display='none'; chartEl.style.display='block';
+    btn.textContent='Als Tabelle anzeigen';
+  } else {
+    const data=window._trendData||genTrendData();
+    document.getElementById('trendTableBody').innerHTML=data.map(d=>`<tr><td>${d.date.toLocaleDateString('de-AT',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'})}</td><td>${d.pct}%</td></tr>`).join('');
+    tableEl.style.display='block'; chartEl.style.display='none';
+    btn.textContent='Als Diagramm anzeigen';
+  }
 }
 
 /* ============================================================
